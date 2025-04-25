@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI SVG Generator</title>
+    <!-- Google Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Link to Stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <!-- Tab Navigation -->
+    <nav class="tab-navigation">
+        <button class="tab-button active" data-tab="generator-tab-content">AI SVG Generator</button>
+        <button class="tab-button" data-tab="extractor-tab-content">Content Extractor</button>
+    </nav>
+
+    <!-- Generator Tab Content -->
+    <div id="generator-tab-content" class="tab-content active">
+        <div class="container">
+            <h1>AI SVG Generator</h1>
+            <div class="prompt-section">
+                <label for="prompt">Enter your SVG description:</label>
+                <textarea id="prompt" rows="3" placeholder="e.g., a simple blue circle with a black 1px stroke"></textarea>
+
+                <!-- Add Slider Controls -->
+                <div class="slider-controls">
+                    <div class="slider-group">
+                        <label for="complexity-slider">Complexity:</label>
+                        <input type="range" id="complexity-slider" name="complexity" min="1" max="10" value="5">
+                        <span class="slider-value" id="complexity-value">5</span>
+                    </div>
+                    <div class="slider-group">
+                        <label for="color-slider">Color Usage (Relative):</label>
+                        <input type="range" id="color-slider" name="colorUsage" min="1" max="10" value="5">
+                        <span class="slider-value" id="color-value">5</span>
+                    </div>
+                </div>
+
+                <!-- Wrapper for button and model selector -->
+                <div class="generate-controls">
+                    <div class="model-selector">
+                        <label for="model-select">Model:</label>
+                        <select id="model-select" name="model">
+                            <option value="gemini-2.5-flash-preview-04-17" selected>Gemini 2.5 Flash Preview</option>
+                            <option value="gemini-2.5-pro-exp-03-25">Gemini 2.5 Pro Exp</option>
+                            <option value="gemini-2.0-flash-thinking-exp-01-21">Gemini 2.0 Flash Thinking Exp</option>
+                            <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+                        </select>
+                    </div>
+                    <button id="generate-btn">Generate SVG</button>
+                </div>
+
+                <p id="status-message" class="status"></p> <!-- Moved status message below controls -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Extractor Tab Content - Initially Hidden -->
+    <div id="extractor-tab-content" class="tab-content" style="display: none;">
+        <div class="container">
+            <h1>Content Extractor</h1>
+            <div class="extractor-input-section">
+                <h2>1. Upload Image & Context</h2>
+                <!-- Wrap upload elements in a drop zone container -->
+                <div id="drop-zone" class="drop-zone">
+                    <p class="drop-zone-prompt">Drag & Drop</p>
+                    <div class="upload-area">
+                        <!-- Keep existing label, hidden input, button, span -->
+                        <label for="image-upload">Upload Image:</label>
+                        <input type="file" id="image-upload" accept="image/*">
+                        <button type="button" onclick="document.getElementById('image-upload').click()" class="secondary-btn">Choose File</button>
+                        <span id="file-name" class="file-name-display">No file chosen</span>
+                    </div>
+                    <div id="image-preview-container" class="image-preview-container" style="display: none;">
+                         <img id="image-preview" src="#" alt="Image Preview"/>
+                    </div>
+                </div> <!-- End drop-zone -->
+
+                <div class="control-group">
+                    <label for="analysis-prompt">Context (Optional):</label>
+                    <textarea id="analysis-prompt" rows="2" placeholder="Provide context or specific requests for the analysis/conversion (e.g., focus on the text, simplify shapes)"></textarea>
+                </div>
+
+                <!-- Model Select & Analyze Button Container -->
+                <div class="extractor-actions control-group">
+                    <div class="model-selector extractor-model-selector">
+                        <label for="extractor-model-select">Model:</label>
+                        <select id="extractor-model-select" name="extractor-model">
+                            <option value="gemini-2.5-flash-preview-04-17" selected>Gemini 2.5 Flash Preview</option>
+                            <option value="gemini-2.5-pro-exp-03-25">Gemini 2.5 Pro Exp</option>
+                            <option value="gemini-2.0-flash-thinking-exp-01-21">Gemini 2.0 Flash Thinking Exp</option>
+                            <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+                        </select>
+                    </div>
+                    <button id="analyze-btn" class="primary-btn">Analyze Image</button>
+                    <p id="analysis-status" class="status"></p>
+                </div>
+
+                <!-- Analysis Results Section (Dynamically Populated) -->
+                <div id="analysis-results-section" class="control-group" style="display: none;">
+                    <!-- Dynamically populated by script.js -->
+                    <!-- Container for buttons -->
+                    <div class="analysis-actions">
+                        <button id="recreate-svg-btn" class="primary-btn" style="display: none;">Recreate in SVG</button>
+                        <button id="copy-markdown-btn" class="secondary-btn" style="display: none;">Copy as Markdown</button>
+                    </div>
+                    <p id="recreate-svg-status" class="status"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Shared Output Area -->
+    <div class="container output-container">
+        <div class="main-content">
+            <div class="editor-section">
+                <h2>SVG Code</h2>
+                <textarea id="svg-code-editor" spellcheck="false" placeholder="Generated SVG code will appear here..."></textarea>
+                <div class="output-controls">
+                    <button id="copy-btn" class="secondary-btn">Copy Code</button>
+                    <button id="save-btn" class="secondary-btn">Save SVG</button>
+                    <button id="save-png-btn" class="secondary-btn">Save PNG</button>
+                    <!-- PNG Dimension Inputs -->
+                    <div class="png-dimensions">
+                        <label for="png-width-input">Width (px):</label>
+                        <input type="number" id="png-width-input" min="10" placeholder="(auto)">
+                        <label for="png-height-input">Height (px):</label>
+                        <input type="number" id="png-height-input" min="10" placeholder="(auto)">
+                        <span class="dimension-note">(Set one for custom size)</span>
+                    </div>
+                </div>
+            </div>
+            <div class="preview-section">
+                <h2>Live Preview</h2>
+                <div id="svg-preview" class="preview-box">
+                    <!-- SVG will be rendered here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- === Refinement Section === -->
+        <div id="refinement-section" class="control-group">
+            <label for="refinement-prompt">Refine SVG:</label>
+            <!-- Textarea takes full width -->
+            <textarea id="refinement-prompt" rows="3" placeholder="Enter refinement instructions (e.g., change background to blue, make text larger)"></textarea>
+            
+            <!-- Actions container for Model Select and Button -->
+            <div class="refinement-actions">
+                <div class="model-selector refine-model-selector">
+                    <label for="refine-model-select">Model:</label>
+                    <select id="refine-model-select" name="refine-model">
+                        <option value="gemini-2.5-flash-preview-04-17" selected>Gemini 2.5 Flash Preview</option>
+                        <option value="gemini-2.5-pro-exp-03-25">Gemini 2.5 Pro Exp</option>
+                        <option value="gemini-2.0-flash-thinking-exp-01-21">Gemini 2.0 Flash Thinking Exp</option>
+                        <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+                    </select>
+                </div>
+                <button id="refine-btn" class="primary-btn">Refine</button>
+                <p id="refine-status" class="status"></p> <!-- Status moved here for alignment -->
+            </div>
+        </div>
+        <!-- === End Refinement Section === -->
+
+    </div>
+
+    <!-- Standalone History Container -->
+    <div class="container history-container">
+         <div id="history-section">
+            <h3>Generation History (Current Session)</h3>
+            <ul id="history-list"></ul>
+            <button id="clear-history-btn" class="secondary-btn">Clear History</button>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html> 

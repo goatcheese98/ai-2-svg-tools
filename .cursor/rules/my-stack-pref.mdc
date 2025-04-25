@@ -1,0 +1,9 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Technical stack
+
+- Python whenever possible. Always create an isolated virtual environment(venv) in python 3.12 (`conda create -p venv python==3.12`)
+- Try using flask for frontend. If some features can not be implement, vanilla JS is alowwed in frontend

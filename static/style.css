@@ -1,0 +1,1099 @@
+:root {
+    /* Dark Theme with Custom Purple Gradient & Final Orange Accents */
+    /* Primary Accent: User-specified Orange */
+    --primary-color: #F2994A; /* User-specified Orange */
+    --primary-hover: #E08434; /* Darker/Desaturated version */
+
+    --secondary-color: #9ca3af;
+    --secondary-hover: #e5e7eb;
+
+    /* Background: Custom Purple Radial Gradient */
+    --background-start: #252142; /* User-provided Center Purple */
+    --background-end: #14161B;   /* User-provided Outer Dark */
+
+    /* Contrast & Structure - Adjust card/border/input based on new background */
+    --card-background: #1f2029;  /* Slightly lighter than outer background */
+    --text-color: #ffffff;
+    --text-light: #cbd5e1;
+    --border-color: #2d2f3d;     /* Dark border related to background */
+    --input-background: #2d2f3d; /* Input bg matching border */
+    --input-focus-border: var(--primary-color);
+    /* Update focus shadow to match new primary color */
+    --input-focus-shadow: rgba(242, 153, 74, 0.4); /* #F2994A shadow */
+
+    --success-color: #10b981;
+    --font-family: 'Inter', sans-serif;
+    --border-radius: 6px;
+    --box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.4), 0 1px 2px -1px rgba(0, 0, 0, 0.3);
+    --button-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+}
+
+body {
+    font-family: var(--font-family);
+    margin: 0;
+    padding: 40px 20px;
+    background: radial-gradient(ellipse at center, var(--background-start) 0%, var(--background-end) 75%);
+    background-attachment: fixed;
+    color: var(--text-color);
+    line-height: 1.6;
+    min-height: 100vh;
+    font-size: 16px; /* Slightly larger base font size */
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto 30px auto;
+    padding: 35px 40px;
+    
+    /* Base Gradient (Restored) */
+    background-color: var(--card-background);
+    background-image: radial-gradient(ellipse at center, 
+        #243642 0%, /* Lighter color in center */
+        var(--card-background) 100% /* Darker card background at edges */
+    );
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    border: none; 
+    position: relative; 
+    overflow: hidden; 
+    transition: none;
+
+    /* --- Combined Sketchy Style --- */
+    /* Add Dashed Border */
+    border: 2px dashed var(--border-color); 
+    
+    /* Add Subtle Hachure Fill OVER the gradient */
+    /* Note: We need to layer the gradients */
+    background-image: 
+        repeating-linear-gradient(
+            -45deg,
+            rgba(255, 255, 255, 0.02), /* Subtle light lines */
+            rgba(255, 255, 255, 0.02) 1px,
+            transparent 1px,
+            transparent 6px /* Adjust line spacing */
+        ),
+        radial-gradient(ellipse at center, 
+            #243642 0%, /* Lighter color in center */
+            var(--card-background) 100% /* Darker card background at edges */
+        ); /* Base gradient underneath */
+}
+
+/* Remove Hover Effect */
+.container:hover {
+   transform: none;
+   box-shadow: var(--box-shadow); /* Keep default shadow, no hover change */
+}
+
+/* Restore Output Container Linear Gradient OVER Sketchy Styles */
+.output-container {
+    /* Explicitly set combined style */
+    border: 2px dashed var(--border-color);
+    background-image: 
+        repeating-linear-gradient(
+            -45deg,
+            rgba(255, 255, 255, 0.02),
+            rgba(255, 255, 255, 0.02) 1px,
+            transparent 1px,
+            transparent 6px
+        ),
+        linear-gradient(180deg, /* Top to Bottom */
+            var(--card-background) 0%, /* Darker color at the top */
+            #243642 100% /* Lighter color at the bottom */
+        );
+    box-shadow: var(--box-shadow); /* Use base shadow */
+    border-radius: var(--border-radius);
+    background-color: transparent; /* Let gradients show */
+}
+
+.output-container:hover {
+   box-shadow: var(--box-shadow); /* No hover change */
+}
+
+/* History Container - Explicitly set combined style */
+.history-container {
+    border: 2px dashed var(--border-color);
+    background-image: 
+        repeating-linear-gradient(
+            -45deg,
+            rgba(255, 255, 255, 0.02),
+            rgba(255, 255, 255, 0.02) 1px,
+            transparent 1px,
+            transparent 6px
+        ),
+        radial-gradient(ellipse at center, 
+            #243642 0%, /* Lighter color in center */
+            var(--card-background) 100% /* Darker card background at edges */
+        ); /* Base gradient underneath */
+    box-shadow: var(--box-shadow); /* Use base shadow */
+    border-radius: var(--border-radius);
+    background-color: transparent; /* Let gradients show */
+}
+
+.history-container:hover {
+     box-shadow: var(--box-shadow); /* No hover change */
+}
+
+h1 {
+    text-align: center;
+    color: var(--text-color);
+    font-weight: 700; /* Bolder */
+    margin-bottom: 40px; /* More space */
+    font-size: 2rem; /* Larger */
+}
+
+h2 {
+    margin-top: 0;
+    color: var(--text-color);
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px;
+    margin-bottom: 25px; /* More space */
+    font-size: 1.35rem; /* Slightly Larger */
+    font-weight: 600;
+}
+
+/* Prompt Section */
+.prompt-section {
+    margin-bottom: 30px;
+    padding: 0;
+    border: none;
+    background-color: transparent;
+    border-radius: 0;
+}
+
+.prompt-section label,
+#analysis-prompt-label /* Target specific label if needed */ {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: var(--text-light); 
+    font-size: 0.95rem;
+}
+
+/* Apply consistent styles to all primary textareas */
+.prompt-section textarea,
+#svg-code-editor,
+#analysis-prompt, 
+#refinement-section textarea {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px 15px;
+    margin-bottom: 15px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+    resize: vertical;
+    background-color: var(--input-background);
+    color: var(--text-color);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Adjust specific textareas if needed */
+#analysis-prompt {
+    min-height: 60px; /* Keep specific min-height */
+    font-size: 0.9rem; /* Keep specific font-size */
+    line-height: 1.4;  /* Keep specific line-height */
+}
+
+#refinement-section textarea {
+    min-height: 60px; 
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.prompt-section textarea::placeholder,
+#svg-code-editor::placeholder,
+#analysis-prompt::placeholder, 
+#refinement-section textarea::placeholder {
+    color: var(--text-light); 
+    opacity: 0.7;
+}
+
+.prompt-section textarea:focus,
+#svg-code-editor:focus,
+#analysis-prompt:focus,
+#refinement-section textarea:focus {
+    outline: none;
+    border-color: var(--input-focus-border);
+    box-shadow: 0 0 0 2px var(--input-focus-shadow);
+    background-color: #3a3c4c; /* Slightly lighter focus background */
+}
+
+/* Style Options */
+/* REMOVE Unused Checkbox Styles */
+/*
+.style-options {
+    margin-bottom: 20px;
+}
+.style-options > label {
+    display: block;
+    margin-bottom: 10px;
+    font-weight: 500;
+    color: var(--text-light);
+}
+.checkbox-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+.checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.checkbox-item input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: var(--primary-color);
+    background-color: var(--input-background);
+    border: 1px solid var(--border-color);
+    border-radius: 3px;
+    appearance: none;
+    -webkit-appearance: none;
+    position: relative;
+}
+.checkbox-item input[type="checkbox"]:checked {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+.checkbox-item input[type="checkbox"]:checked::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 5px;
+    width: 4px;
+    height: 8px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+.checkbox-item label {
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: var(--text-light);
+    user-select: none;
+}
+*/
+
+#svg-code-editor {
+    height: 450px;
+    font-family: monospace;
+    font-size: 0.9rem;
+}
+
+/* Buttons */
+button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600; /* Slightly bolder */
+    transition: background-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease, transform 0.1s ease;
+    box-shadow: var(--button-shadow);
+}
+button:active {
+    transform: scale(0.98); /* Subtle press effect */
+}
+
+/* Primary Button (Generate) - Use new purple */
+#generate-btn {
+    background-color: var(--primary-color);
+    color: white;
+    display: inline-block; /* Back to inline-block */
+    margin-left: 0;
+    margin-right: 0;
+    margin-top: 0; /* Remove top margin */
+}
+#generate-btn:hover {
+    background-color: var(--primary-hover);
+    box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.25), 0 3px 4px -1px rgba(0, 0, 0, 0.2);
+}
+
+/* Secondary Buttons (Save, Clear) */
+#save-btn,
+#clear-history-btn {
+    background-color: var(--input-background);
+    color: var(--text-light);
+    border: 1px solid var(--border-color);
+    font-weight: 500;
+    box-shadow: none;
+}
+#save-btn:hover,
+#clear-history-btn:hover {
+    background-color: var(--border-color); /* Use border color for hover */
+    border-color: var(--secondary-color);
+    color: var(--text-color);
+}
+
+/* Tertiary/Utility Button (Copy) */
+#copy-btn {
+    background-color: transparent;
+    color: var(--secondary-color);
+    padding: 8px 15px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    box-shadow: none;
+    border: 1px solid transparent;
+}
+#copy-btn:hover {
+    color: var(--text-color);
+    background-color: rgba(255, 255, 255, 0.08); /* Slightly more visible hover */
+}
+#copy-btn.copied {
+    background-color: var(--success-color);
+    color: white;
+    border-color: var(--success-color);
+}
+
+button:disabled {
+    background-color: var(--border-color);
+    color: #64748b;
+    cursor: not-allowed;
+    box-shadow: none;
+    border: 1px solid var(--border-color);
+}
+
+/* Status Message */
+.status {
+    margin-top: 20px; /* Increase space now that it's below button/selector */
+    font-size: 0.9rem;
+    color: var(--text-light);
+}
+.status[style*="color: red"] {
+    color: #f87171; /* Lighter red for dark mode */
+}
+.status[style*="color: green"] {
+    color: #34d399; /* Lighter green for dark mode */
+}
+.status.info {
+    color: var(--text-light); /* Use the standard light text color */
+}
+
+
+/* Main Content Layout */
+.main-content {
+    display: flex;
+    gap: 30px;
+    margin-top: 0;
+}
+
+.editor-section, .preview-section {
+    flex: 1;
+    padding: 0;
+    border: none;
+    background-color: transparent;
+    border-radius: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Align buttons below respective areas */
+.editor-section button,
+.preview-section button {
+    margin-top: 15px;
+    align-self: flex-start;
+}
+
+/* Preview Box */
+.preview-box {
+    width: 100%;
+    height: 450px;
+    border: 1px solid var(--border-color);
+    /* Use a slightly lighter bg for preview contrast, or keep card bg */
+    /* background-color: #4b5563; */
+    background-color: var(--card-background);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: auto;
+    border-radius: var(--border-radius);
+    padding: 10px;
+    box-sizing: border-box;
+}
+/* Style SVG elements for better visibility on dark bg if needed */
+#svg-preview svg * {
+    /* Example: Ensure default stroke isn't black if background is very dark */
+    /* stroke: var(--text-light); */ /* Careful: this overrides SVG definitions */
+}
+#svg-preview svg {
+    max-width: 100%;
+    max-height: 100%;
+    /* Add a subtle filter if contrast is an issue with generated SVGs */
+    /* filter: brightness(1.1) contrast(1.1); */
+}
+
+/* Update Preview placeholder text color */
+.preview-box p {
+    color: var(--text-light); /* Ensure placeholder text is visible */
+}
+
+/* History Section */
+.history-container {
+    /* Adjust margin if necessary, inherits .container styles by default */
+}
+
+h3 {
+    /* Ensure h3 within history section is styled correctly */
+    /* Example: Reset margin if container padding handles it */
+    /* margin-top: 0; */
+    border-bottom: 1px solid var(--border-color); /* Keep the separator line */
+    padding-bottom: 10px;
+    margin-bottom: 25px;
+    font-size: 1.3rem; /* Consistent size */
+    font-weight: 600;
+}
+
+#history-list {
+    list-style: none;
+    padding: 0;
+    max-height: 250px;
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    margin-bottom: 20px;
+    background-color: #272934; /* Adjust slightly based on new palette */
+}
+
+#history-list li {
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.95rem;
+}
+
+#history-list li:last-child {
+    border-bottom: none;
+}
+
+/* Update History List Hover Color */
+#history-list li:hover {
+    /* Subtle primary accent hover (new orange) */
+    background-color: rgba(242, 153, 74, 0.1); /* #F2994A hover */
+}
+
+#history-list li .prompt-snippet {
+    flex-grow: 1;
+    margin-right: 15px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    color: var(--text-color);
+    font-weight: 500;
+}
+
+#history-list li .timestamp {
+    font-size: 0.8em;
+    color: var(--text-light);
+    flex-shrink: 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    body {
+        padding: 20px 15px;
+    }
+    .container {
+        padding: 20px;
+    }
+    .main-content {
+        flex-direction: column;
+        gap: 25px;
+    }
+    #svg-code-editor,
+    .preview-box {
+        height: 350px;
+    }
+}
+
+/* Removed Post-Generation Controls CSS */
+
+/* Slider Controls */
+.slider-controls {
+    margin-bottom: 25px;
+    display: flex;
+    flex-direction: column; /* Stack sliders vertically */
+    gap: 15px;
+}
+
+/* Generate Controls (Button + Model Selector) */
+.generate-controls {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 20px;
+    margin-top: 25px;
+    flex-wrap: wrap;
+}
+
+#generate-btn {
+    order: 2;
+}
+
+.model-selector {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    order: 1;
+}
+
+.model-selector label {
+    font-size: 0.9rem;
+    color: var(--text-light);
+    white-space: nowrap;
+}
+
+.model-selector select {
+    padding: 10px 20px;
+    border-radius: var(--border-radius);
+    background-color: var(--input-background);
+    color: var(--text-light);
+    border: 1px solid var(--border-color);
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    min-width: 200px;
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="%239ca3af" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 12px 12px;
+}
+
+.model-selector select:hover {
+    background-color: var(--border-color);
+    border-color: var(--secondary-color);
+    color: var(--text-color);
+}
+
+.model-selector select:focus {
+    outline: none;
+    border-color: var(--input-focus-border);
+    box-shadow: 0 0 0 2px var(--input-focus-shadow);
+}
+
+.slider-group {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.slider-group label {
+    flex-shrink: 0;
+    font-size: 0.95rem;
+    color: var(--text-light);
+    width: 180px;
+}
+
+.slider-group input[type="range"] {
+    flex-grow: 1;
+}
+
+.slider-value {
+}
+
+/* Tab Navigation */
+.tab-navigation {
+    display: flex;
+    justify-content: center; /* Center tabs */
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--border-color);
+    padding: 0 20px; /* Add horizontal padding */
+}
+
+.tab-button {
+    padding: 12px 25px;
+    cursor: pointer;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent; /* Indicator */
+    color: var(--text-light);
+    font-size: 1.1rem; /* Slightly larger tab text */
+    font-weight: 500;
+    transition: color 0.2s ease, border-bottom-color 0.2s ease;
+    margin-bottom: -1px; /* Overlap bottom border */
+    box-shadow: none;
+}
+
+.tab-button:hover {
+    color: var(--text-color);
+}
+
+.tab-button.active {
+    color: var(--primary-color); /* Use accent color for active tab */
+    border-bottom-color: var(--primary-color);
+    font-weight: 600;
+}
+
+/* Tab Content - only show active */
+.tab-content {
+    /* display: none; // Handled by inline style initially */
+}
+.tab-content.active {
+    display: block;
+}
+
+/* Adjust container margin for first container after tabs */
+.tab-content.active > .container:first-child {
+    margin-top: 20px;
+}
+
+/* Content Extractor Styles */
+.extractor-input-section h2,
+#analysis-results-section h2 {
+    /* Match other h2 styles */
+    margin-top: 0;
+    color: var(--text-color);
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px;
+    margin-bottom: 25px;
+    font-size: 1.35rem;
+    font-weight: 600;
+}
+
+.upload-area {
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.upload-area label {
+    color: var(--text-light);
+    font-size: 0.95rem;
+}
+
+/* Hide the actual file input */
+.upload-area input[type="file"] {
+    display: none;
+}
+
+.file-name-display {
+    font-style: italic;
+    color: var(--text-light);
+    font-size: 0.9rem;
+}
+
+.image-preview-container {
+    margin-top: 15px;
+    margin-bottom: 20px;
+    max-width: 400px; /* Limit preview size */
+    border: 1px dashed var(--border-color);
+    padding: 5px;
+    background-color: var(--input-background);
+    border-radius: var(--border-radius);
+}
+
+.image-preview-container img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    border-radius: calc(var(--border-radius) - 2px); /* Inner radius */
+}
+
+/* Drag and Drop Styles */
+.upload-area.dragover,
+.image-preview-container.dragover {
+    border-color: var(--primary-color);
+    border-style: solid; /* Change from dashed/solid to solid */
+    background-color: rgba(242, 153, 74, 0.1); /* Use accent color with low opacity */
+}
+
+/* Output Container - Specific Linear Gradient */
+.output-container {
+    background: linear-gradient(180deg, /* Top to Bottom */
+        var(--card-background) 0%, /* Darker color at the top */
+        #243642 100% /* Lighter color at the bottom */
+    );
+    /* Styles specific to output container, if any */
+}
+
+/* New Drop Zone Styles */
+.drop-zone {
+    border: 2px dashed var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 30px;
+    text-align: center;
+    margin-bottom: 20px;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.drop-zone-prompt {
+    margin: 0 0 15px 0;
+    color: var(--text-light);
+    font-weight: 500;
+}
+
+.drop-zone.dragover {
+    border-color: var(--primary-color);
+    border-style: solid;
+    background-color: rgba(242, 153, 74, 0.05); /* Lighter than upload-area hover */
+}
+
+.upload-area {
+    /* Adjustments for inside drop-zone */
+    margin-bottom: 15px; /* Less margin needed now */
+    justify-content: center; /* Center items within the row */
+}
+
+/* Remove dragover styles from individual elements if drop-zone handles it */
+/*
+.upload-area.dragover,
+.image-preview-container.dragover {
+    ...
+}
+*/
+
+.image-preview-container {
+    /* Center preview within drop-zone */
+    margin-left: auto;
+    margin-right: auto;
+    /* Keep other styles */
+}
+
+/* ... (rest of extractor styles) ... */
+
+/* --------------------
+ * Content Extractor Tab Specific Styles
+ * -------------------- */
+
+/* ... other extractor styles ... */
+
+#analysis-results-section {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+    display: flex; /* Use flexbox for layout */
+    flex-direction: column; /* Stack children vertically */
+    gap: 1rem; /* Reduce direct gap between blocks */
+}
+
+#analysis-results-section h3 {
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+    color: var(--text-primary);
+}
+
+/* Style for each analysis block (label + textarea container) */
+.analysis-block {
+    display: flex;
+    flex-direction: column; /* Stack label above textarea */
+    gap: 1rem; /* Keep gap between label and textarea */
+    margin-bottom: 2.5rem; /* Add explicit margin below each block */
+}
+
+/* Container for action buttons below analysis */
+.analysis-actions {
+    display: flex;
+    gap: 1rem; /* Space between buttons */
+    margin-top: 1.5rem; /* Space above buttons */
+    flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
+}
+
+.analysis-block label {
+    font-weight: bold;
+    color: #D1DD58; /* Keep label color */
+    font-size: 0.9rem;
+}
+
+#analysis-results-section textarea {
+    width: 100%; /* Take full width */
+    min-height: 100px; /* Minimum height */
+    resize: vertical; /* Allow vertical resizing only */
+    overflow-y: hidden; /* Prevent scrollbar */
+    padding: 0.8rem;
+    background-color: var(--input-bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    color: var(--text-color); /* Reverted to default text color */
+    font-family: inherit;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    box-sizing: border-box; /* Include padding and border in the element's total width and height */
+}
+
+#analysis-results-section textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.2);
+}
+
+/* Ensure Convert button has some top margin when it appears */
+#convert-btn {
+    margin-top: 1rem;
+}
+
+/* ... rest of the styles ... */
+
+/* Output Section Adjustments (if needed) */
+.output-section {
+    /* Styles for the container of editor/preview/refinement/history */
+}
+
+/* === Refinement Section Styles === */
+#refinement-section {
+    margin-top: 1.5rem; /* Space above refinement section */
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-color); /* Separator line */
+}
+
+#refinement-section label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+    color: var(--text-secondary);
+}
+
+/* Style for the new actions group */
+.refinement-actions {
+    display: flex;
+    align-items: flex-end; /* Align bottom */
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+/* Target the selector within this group */
+.refinement-actions .refine-model-selector {
+    flex-shrink: 0; 
+    width: 250px; 
+}
+
+/* Target the button within this group */
+.refinement-actions #refine-btn {
+    margin-bottom: 0; /* Align with bottom of select */
+}
+
+/* Target the status within this group */
+.refinement-actions #refine-status {
+    order: 3; /* Ensure it comes after button */
+    width: 100%;
+    text-align: left;
+    margin-left: 0;
+    margin-top: 0.5rem;
+}
+
+#refinement-section textarea {
+    /* Base styles applied via group selector */
+    min-height: 80px; /* Slightly taller default */
+}
+
+/* ... other refinement styles ... */
+
+/* Input Container (if needed, uses base .container style) */
+
+/* Output Container - Uses base .container radial gradient */
+.output-container {
+    /* Styles specific to output container, if any */
+}
+
+/* History Container - Uses base .container radial gradient */
+.history-container {
+    /* Adjust margin if necessary */
+}
+
+#history-section {
+    /* Remove styles if previously defined outside of container context */
+}
+
+#history-section {
+    /* Remove styles if previously defined outside of container context */
+}
+
+/* Container for extractor model select and analyze button */
+.extractor-actions {
+    display: flex;
+    align-items: flex-end; /* Align items to the bottom */
+    gap: 1rem;
+    flex-wrap: wrap; /* Allow wrapping */
+    margin-top: 1rem; /* Space above */
+}
+
+/* Adjust model selector specifically within extractor actions if needed */
+.extractor-model-selector {
+    flex-grow: 1; /* Allow selector to take up space */
+    max-width: 300px; /* Optional: Limit max width */
+    order: 1; /* Ensure dropdown comes first */
+}
+
+.extractor-actions #analyze-btn {
+    /* Adjustments if needed, e.g., margin-bottom to align with select */
+    margin-bottom: 0; /* Assuming base button style has no margin */
+    order: 2; /* Ensure button comes second */
+}
+
+/* Ensure status message comes after button */
+.extractor-actions #analysis-status {
+    order: 3; /* Place status message last in the row */
+    width: 100%; /* Allow it to take full width on next line if wrapped */
+    text-align: left; /* Align status text */
+    margin-left: 0; /* Reset margin if needed */
+    margin-top: 0.5rem; /* Add some space if it wraps */
+}
+
+/* --- Button Type Styles --- */
+
+/* Primary Buttons (Generate, Analyze, Refine, etc.) */
+.primary-btn {
+    background-color: var(--primary-color);
+    color: white;
+    border: none; /* Primary buttons usually don't need a border */
+}
+.primary-btn:hover {
+    background-color: var(--primary-hover);
+    box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.25), 0 3px 4px -1px rgba(0, 0, 0, 0.2); /* Restore hover shadow */
+}
+.primary-btn:disabled {
+    background-color: #a07552; /* Muted orange for disabled */
+    color: #e0d6ce;
+    cursor: not-allowed;
+    box-shadow: none;
+    border: none;
+}
+
+/* Secondary Buttons (Save, Clear, Copy Markdown) */
+.secondary-btn {
+    background-color: var(--input-background);
+    color: var(--text-light);
+    border: 1px solid var(--border-color);
+    font-weight: 500;
+    box-shadow: none;
+}
+.secondary-btn:hover {
+    background-color: var(--border-color); /* Use border color for hover */
+    border-color: var(--secondary-color);
+    color: var(--text-color);
+}
+.secondary-btn:disabled {
+    background-color: var(--input-background);
+    color: #64748b;
+    border-color: var(--border-color);
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+/* Specific Button Overrides (If Needed) */
+#generate-btn {
+    /* Inherits .primary-btn styles */
+}
+
+#save-btn, 
+#clear-history-btn,
+#copy-markdown-btn {
+    /* Inherits .secondary-btn styles */
+}
+
+#analyze-btn {
+    /* Inherits .primary-btn styles */
+}
+
+#recreate-svg-btn {
+    /* Inherits .primary-btn styles */
+}
+
+#refine-btn {
+     /* Inherits .primary-btn styles */
+}
+
+#copy-btn { /* Specific style for small copy button */
+    background-color: transparent;
+    color: var(--secondary-color);
+    padding: 8px 15px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    box-shadow: none;
+    border: 1px solid transparent;
+}
+#copy-btn:hover {
+    color: var(--text-color);
+    background-color: rgba(255, 255, 255, 0.08); /* Slightly more visible hover */
+}
+#copy-btn.copied {
+    background-color: var(--success-color);
+    color: white;
+    border-color: var(--success-color);
+}
+
+/* Remove old button styles if they exist */
+/* e.g., #generate-btn specific bg, #save-btn specific bg */
+
+/* Base button disabled state (can be overridden by specific types) */
+button:disabled {
+    /* Generic disabled style, .primary-btn:disabled / .secondary-btn:disabled are more specific */
+    background-color: var(--border-color);
+    color: #64748b;
+    cursor: not-allowed;
+    box-shadow: none;
+    border: 1px solid var(--border-color);
+}
+
+.output-controls {
+    display: flex;
+    flex-wrap: wrap; /* Allow wrapping */
+    gap: 10px; /* Spacing between buttons/groups */
+    align-items: center; /* Vertically align items */
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid var(--border-color);
+}
+
+/* Styling for the PNG dimension input group */
+.png-dimensions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto; /* Push to the right */
+    padding: 5px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-small);
+    background-color: var(--input-background);
+}
+
+.png-dimensions label {
+    font-size: 0.85rem;
+    color: var(--text-light);
+    margin-right: -4px; /* Pull label closer to input */
+}
+
+.png-dimensions input[type="number"] {
+    width: 70px; /* Fixed width for dimension inputs */
+    padding: 4px 6px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-small);
+    background-color: var(--card-background); /* Slightly different bg */
+    color: var(--text-color);
+    font-size: 0.9rem;
+    text-align: center;
+    -moz-appearance: textfield; /* Hide spinners in Firefox */
+}
+.png-dimensions input[type="number"]::-webkit-outer-spin-button,
+.png-dimensions input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none; /* Hide spinners in Chrome/Safari */
+    margin: 0;
+}
+
+.png-dimensions input::placeholder {
+    color: var(--text-light);
+    opacity: 0.6;
+    font-size: 0.85rem;
+}
+
+.png-dimensions input:focus {
+    outline: none;
+    border-color: var(--input-focus-border);
+    box-shadow: 0 0 0 1px var(--input-focus-shadow);
+    background-color: #3a3c4c; 
+}
+
+.dimension-note {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-left: 5px;
+    font-style: italic;
+} 
