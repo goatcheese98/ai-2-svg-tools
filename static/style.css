@@ -441,6 +441,11 @@ button:disabled {
 #svg-preview svg {
     max-width: 100%;
     max-height: 100%;
+    /* Explicitly set width to fill container and height to scale */
+    width: 100%; /* Added */
+    height: auto;
+    display: block; /* Remove extra space below inline elements */
+    margin: auto; /* Center if smaller than container */
     /* Add a subtle filter if contrast is an issue with generated SVGs */
     /* filter: brightness(1.1) contrast(1.1); */
 }
