@@ -907,8 +907,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 refineStatus.style.color = 'green';
                 // ... (Save to history) ...
                 const currentPrompt = promptInput.value.trim(); 
-                const complexity = parseInt(complexityButtons.find(btn => btn.classList.contains('active')).dataset.value, 10);
-                const colorUsage = parseInt(colorUsageButtons.find(btn => btn.classList.contains('active')).dataset.value, 10);
+                // FIX: Convert NodeList to Array before using .find()
+                const activeComplexityButton = Array.from(complexityButtons).find(btn => btn.classList.contains('active'));
+                const complexity = activeComplexityButton ? parseInt(activeComplexityButton.dataset.value, 10) : 3; // Default 3 if not found
+                // FIX: Convert NodeList to Array before using .find()
+                const activeColorUsageButton = Array.from(colorUsageButtons).find(btn => btn.classList.contains('active'));
+                const colorUsage = activeColorUsageButton ? parseInt(activeColorUsageButton.dataset.value, 10) : 3; // Default 3 if not found
                 saveHistoryItem(currentPrompt + ` (Refined${refinementInstructions ? ': ' + refinementInstructions.substring(0,20) + '...': ' - Auto'})`, complexity, colorUsage, selectedModel, refinedSvgCode);
                 updateHistoryList();
             } else {

@@ -598,8 +598,9 @@ h3 {
 }
 
 .control-button-group .buttons {
-    display: flex;
-    gap: 5px;
+    display: flex; /* Lay out buttons in a row */
+    gap: 5px; /* Space between individual buttons */
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
 }
 
 .control-button {
