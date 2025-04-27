@@ -31,23 +31,17 @@
                     <div class="control-button-group">
                         <label>Complexity:</label>
                         <div class="buttons" id="complexity-buttons">
-                            <button class="control-button" data-value="1">1</button>
-                            <button class="control-button" data-value="2">2</button>
-                            <button class="control-button active" data-value="3">3</button> <!-- Default active -->
-                            <button class="control-button" data-value="4">4</button>
-                            <button class="control-button" data-value="5">5</button>
-                            <button class="control-button" data-value="6">6</button>
+                            <button class="control-button" data-value="1">Low</button>
+                            <button class="control-button active" data-value="3">Medium</button> <!-- Default active -->
+                            <button class="control-button" data-value="5">High</button>
                         </div>
                     </div>
                     <div class="control-button-group">
                         <label>Color Usage:</label>
                         <div class="buttons" id="color-usage-buttons">
-                            <button class="control-button" data-value="1">1</button>
-                            <button class="control-button" data-value="2">2</button>
-                            <button class="control-button active" data-value="3">3</button> <!-- Default active -->
-                            <button class="control-button" data-value="4">4</button>
-                            <button class="control-button" data-value="5">5</button>
-                            <button class="control-button" data-value="6">6</button>
+                            <button class="control-button" data-value="1">Low</button>
+                            <button class="control-button active" data-value="3">Medium</button> <!-- Default active -->
+                            <button class="control-button" data-value="5">High</button>
                         </div>
                     </div>
                 </div>
@@ -66,7 +60,8 @@
                     <button id="generate-btn">Generate SVG</button>
                 </div>
 
-                <p id="status-message" class="status"></p> <!-- Moved status message below controls -->
+                <span class="loading-spinner" id="generate-spinner"></span>
+                <p id="status-message" class="status"></p>
             </div>
         </div>
     </div>
@@ -109,6 +104,7 @@
                         </select>
                     </div>
                     <button id="analyze-btn" class="primary-btn">Analyze Image</button>
+                    <span class="loading-spinner" id="analyze-spinner"></span>
                     <p id="analysis-status" class="status"></p>
                 </div>
 
@@ -120,6 +116,7 @@
                         <button id="recreate-svg-btn" class="primary-btn" style="display: none;">Recreate in SVG</button>
                         <button id="copy-markdown-btn" class="secondary-btn" style="display: none;">Copy as Markdown</button>
                     </div>
+                    <span class="loading-spinner" id="recreate-spinner"></span>
                     <p id="recreate-svg-status" class="status"></p>
                 </div>
             </div>
@@ -180,7 +177,8 @@
                     </select>
                 </div>
                 <button id="refine-btn" class="primary-btn">Refine</button>
-                <p id="refine-status" class="status"></p> <!-- Status moved here for alignment -->
+                <span class="loading-spinner" id="refine-spinner"></span>
+                <p id="refine-status" class="status"></p>
             </div>
         </div>
         <!-- === End Refinement Section === -->

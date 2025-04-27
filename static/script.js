@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const savePngBtn = document.getElementById('save-png-btn'); // New PNG save button reference
     const pngWidthInput = document.getElementById('png-width-input'); // PNG Width Input
     const pngHeightInput = document.getElementById('png-height-input'); // PNG Height Input
+    const generateSpinner = document.getElementById('generate-spinner'); // ADDED
 
     // Background Control Elements
     const backgroundControlButtons = document.querySelectorAll('.bg-control-btn');
@@ -42,12 +43,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const extractorActionsContainer = document.querySelector('.extractor-actions'); // Get the actions container
     const analyzeBtn = document.getElementById('analyze-btn');
     const analysisStatus = document.getElementById('analysis-status');
+    const analyzeSpinner = document.getElementById('analyze-spinner'); // ADDED
     const dropZone = document.getElementById('drop-zone'); // Add drop zone reference
 
     // Placeholders for future elements
     const analysisResultsSection = document.getElementById('analysis-results-section');
     const recreateSvgBtn = document.getElementById('recreate-svg-btn');
     const recreateSvgStatus = document.getElementById('recreate-svg-status');
+    const recreateSpinner = document.getElementById('recreate-spinner'); // ADDED
     const copyMarkdownBtn = document.getElementById('copy-markdown-btn');
     const analysisButtonsContainer = document.querySelector('#analysis-results-section .analysis-actions'); // Ref the specific button container
 
@@ -56,6 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const refineModelSelect = document.getElementById('refine-model-select'); // New Refine Model Select
     const refineBtn = document.getElementById('refine-btn');
     const refineStatus = document.getElementById('refine-status');
+    const refineSpinner = document.getElementById('refine-spinner'); // ADDED
 
     // Store image data temporarily
     let currentImageDataUrl = null;
@@ -104,6 +108,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- UI Helper Functions ---
     function _update_generation_ui(is_loading, message = null, is_error = false) {
         generateBtn.disabled = is_loading;
+        
+        // Toggle spinner visibility
+        if (is_loading) {
+            generateSpinner.classList.add('visible');
+        } else {
+            generateSpinner.classList.remove('visible');
+        }
 
         if (message) {
             statusMessage.textContent = message;
@@ -410,8 +421,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Helper to set active button based on value
     function setActiveButton(buttons, value) {
+        let targetValue;
+        if (value <= 2) {
+            targetValue = 1; // Activate 'Low' button (value=1)
+        } else if (value <= 4) {
+            targetValue = 3; // Activate 'Medium' button (value=3)
+        } else {
+            targetValue = 5; // Activate 'High' button (value=5)
+        }
+
         buttons.forEach(btn => {
-            if (parseInt(btn.dataset.value, 10) === value) {
+            if (parseInt(btn.dataset.value, 10) === targetValue) {
                 btn.classList.add('active');
             } else {
                 btn.classList.remove('active');
@@ -568,6 +588,7 @@ document.addEventListener('DOMContentLoaded', () => {
             analysisStatus.textContent = 'Analyzing image...';
             analysisStatus.className = 'status info';
             analysisStatus.style.color = '';
+            analyzeSpinner.classList.add('visible'); // Show spinner
 
             // --- Immediately Create UI Structure --- 
             if (analysisResultsSection) {
@@ -692,6 +713,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } finally {
                 analyzeBtn.disabled = false;
+                analyzeSpinner.classList.remove('visible'); // Hide spinner
                  setTimeout(() => {
                     // Clear status message only if it wasn't an error
                     if (!analysisStatus.textContent.startsWith('Error:')) {
@@ -738,6 +760,7 @@ document.addEventListener('DOMContentLoaded', () => {
              recreateStatusDisplay.textContent = 'Recreating SVG...';
              recreateStatusDisplay.className = 'status info';
              recreateStatusDisplay.style.color = '';
+             recreateSpinner.classList.add('visible'); // Show spinner
         }
 
         try {
@@ -751,11 +774,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 })
             });
 
-            const data = await response.json();
-
-            if (response.ok) {
+            // --- IMPROVED ERROR CHECKING ---
+            const contentType = response.headers.get("content-type");
+            if (response.ok && contentType && contentType.includes("application/json")) {
+                // It's likely JSON, proceed to parse
+                const data = await response.json(); 
+                // Process success (this part remains the same)
                 const generatedSvgCode = data.svg_code;
-                // Update the SHARED editor and preview
                 svgCodeEditor.value = generatedSvgCode;
                 updatePreview(generatedSvgCode);
                 if (recreateStatusDisplay) {
@@ -763,22 +788,42 @@ document.addEventListener('DOMContentLoaded', () => {
                      recreateStatusDisplay.className = 'status';
                      recreateStatusDisplay.style.color = 'green';
                 }
-                // TODO: Save extractor result to history (using a different structure)
+                // TODO: Save extractor result to history
                 // saveHistoryItemExtractor(...) 
                 // updateHistoryList();
+
             } else {
-                throw new Error(data.error || 'Unknown recreation error');
+                // It's not JSON or not status OK, likely an HTML error page
+                const errorText = await response.text(); // Read the response as text
+                console.error("Server returned non-JSON response:", errorText); 
+                let errorMessage = `Server returned status ${response.status}.`;
+                // Attempt to extract a title or header from the HTML for a hint
+                const titleMatch = errorText.match(/<title>(.*?)<\/title>/i);
+                const h1Match = errorText.match(/<h1>(.*?)<\/h1>/i);
+                if (titleMatch && titleMatch[1]) {
+                    errorMessage += ` Error: ${titleMatch[1]}`;
+                } else if (h1Match && h1Match[1]) {
+                     errorMessage += ` Error: ${h1Match[1]}`;
+                } else {
+                    errorMessage += " Check console for full server response.";
+                }
+                 // Throw an error to be caught by the catch block
+                throw new Error(errorMessage);
             }
+            // --- END IMPROVED ERROR CHECKING ---
 
         } catch (error) {
+            // This catch block now handles JSON parsing errors AND the thrown error from non-JSON responses
             console.error("Recreation Error:", error);
              if (recreateStatusDisplay) {
+                 // Display the potentially more informative error message
                  recreateStatusDisplay.textContent = `Error: ${error.message}`;
                  recreateStatusDisplay.className = 'status';
                  recreateStatusDisplay.style.color = 'red';
              }
         } finally {
              if (recreateButton) recreateButton.disabled = false;
+             recreateSpinner.classList.remove('visible'); // Hide spinner
              if (recreateStatusDisplay) {
                   setTimeout(() => {
                     if (!recreateStatusDisplay.textContent.startsWith('Error:')) {
@@ -874,13 +919,14 @@ document.addEventListener('DOMContentLoaded', () => {
         refineStatus.textContent = 'Generating preview PNG...'; // New status
         refineStatus.className = 'status info';
         refineStatus.style.color = '';
+        refineSpinner.classList.add('visible'); // Show spinner initially for PNG gen
 
         let pngDataUrl = null;
         try {
             // --- Generate PNG --- 
             pngDataUrl = await generatePngFromSvgPreview(1000); // Default to 1000px min
 
-            refineStatus.textContent = 'Refining SVG with analysis...'; // Update status
+            refineStatus.textContent = 'Refining SVG with analysis...'; // Update status (spinner stays visible)
 
             // --- Fetch Call --- 
             const response = await fetch('/refine_svg', {
@@ -926,6 +972,7 @@ document.addEventListener('DOMContentLoaded', () => {
             refineStatus.style.color = 'red';
         } finally {
             refineBtn.disabled = false;
+            refineSpinner.classList.remove('visible'); // Hide spinner
             setTimeout(() => {
                 if (!refineStatus.textContent.startsWith('Error:')) {
                     refineStatus.textContent = '';

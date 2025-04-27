@@ -1,43 +1,45 @@
 :root {
-    /* Dark Theme with Custom Purple Gradient & Final Orange Accents */
-    /* Primary Accent: User-specified Orange */
-    --primary-color: #F2994A; /* User-specified Orange */
-    --primary-hover: #E08434; /* Darker/Desaturated version */
+    /* Firebase-inspired Theme */
+    /* Primary Accent: Adjusted Orange */
+    --primary-color: #E69500; /* Darker/Less Sat Orange */
+    --primary-hover: #CC8400; /* Even Darker Orange */
 
-    --secondary-color: #9ca3af;
-    --secondary-hover: #e5e7eb;
+    --secondary-color: #8F8F8F; /* Gray 60 */
+    --secondary-hover: #ABABAB; /* Gray 70 */
 
-    /* Background: Custom Purple Radial Gradient */
-    --background-start: #252142; /* User-provided Center Purple */
-    --background-end: #14161B;   /* User-provided Outer Dark */
+    /* Background: Dark Greys */
+    --background-start: #1F1F1F; /* Gray 10 */
+    --background-end: #000000;   /* Gray 0 (Black) */
 
-    /* Contrast & Structure - Adjust card/border/input based on new background */
-    --card-background: #1f2029;  /* Slightly lighter than outer background */
-    --text-color: #ffffff;
-    --text-light: #cbd5e1;
-    --border-color: #2d2f3d;     /* Dark border related to background */
-    --input-background: #2d2f3d; /* Input bg matching border */
+    /* Contrast & Structure */
+    --card-background: #303030;  /* Gray 20 */
+    --text-color: #FFFFFF;       /* Gray 100 */
+    --text-light: #E3E3E3;       /* Gray 90 */
+    --border-color: #474747;     /* Gray 30 */
+    --input-background: #474747; /* Gray 30 */
     --input-focus-border: var(--primary-color);
-    /* Update focus shadow to match new primary color */
-    --input-focus-shadow: rgba(242, 153, 74, 0.4); /* #F2994A shadow */
+    --input-focus-shadow: rgba(230, 149, 0, 0.4); /* Adjusted Orange shadow */
 
-    --success-color: #10b981;
-    --font-family: 'Inter', sans-serif;
-    --border-radius: 6px;
-    --box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.4), 0 1px 2px -1px rgba(0, 0, 0, 0.3);
-    --button-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+    --success-color: #34A853; /* Google Cloud Green */
+    --error-color: #DD2C00;   /* Firebase Red */
+
+    --font-family: 'Inter', sans-serif; /* Keep Inter for now */
+    --border-radius: 6px; /* Keep moderate radius */
+    --box-shadow: none; /* Remove default shadow for flatter look */
+    --button-shadow: none; /* Remove default shadow */
 }
 
 body {
     font-family: var(--font-family);
     margin: 0;
     padding: 40px 20px;
-    background: radial-gradient(ellipse at center, var(--background-start) 0%, var(--background-end) 75%);
-    background-attachment: fixed;
+    /* Use solid dark background instead of radial gradient */
+    background-color: var(--background-end); 
+    background-image: none;
     color: var(--text-color);
     line-height: 1.6;
     min-height: 100vh;
-    font-size: 16px; /* Slightly larger base font size */
+    font-size: 16px;
 }
 
 .container {
@@ -45,25 +47,8 @@ body {
     margin: 0 auto 30px auto;
     padding: 35px 40px;
     
-    /* Base Gradient (Restored) */
     background-color: var(--card-background);
-    background-image: radial-gradient(ellipse at center, 
-        #243642 0%, /* Lighter color in center */
-        var(--card-background) 100% /* Darker card background at edges */
-    );
-    border-radius: var(--border-radius);
-    box-shadow: var(--box-shadow);
-    border: none; 
-    position: relative; 
-    overflow: hidden; 
-    transition: none;
-
-    /* --- Combined Sketchy Style --- */
-    /* Add Dashed Border */
-    border: 2px dashed var(--border-color); 
-    
-    /* Add Subtle Hachure Fill OVER the gradient */
-    /* Note: We need to layer the gradients */
+    /* Keep hachure fill */
     background-image: 
         repeating-linear-gradient(
             -45deg,
@@ -71,74 +56,49 @@ body {
             rgba(255, 255, 255, 0.02) 1px,
             transparent 1px,
             transparent 6px /* Adjust line spacing */
-        ),
-        radial-gradient(ellipse at center, 
-            #243642 0%, /* Lighter color in center */
-            var(--card-background) 100% /* Darker card background at edges */
-        ); /* Base gradient underneath */
+        );
+    border-radius: var(--border-radius); /* Keep existing radius */
+    box-shadow: var(--box-shadow); 
+    position: relative; 
+    overflow: hidden; /* Important for border-radius + border-image */
+    transition: none;
+
+    /* --- Add Gradient Border --- */
+    border-style: solid;
+    border-width: 2px; /* Adjust thickness as needed */
+    border-color: transparent; /* Make base border transparent */
+    border-image-slice: 1; /* Use the entire gradient image for the border */
+    border-image-source: linear-gradient(90deg, var(--primary-color), #C774E8); /* Adjusted Orange to Darker Pink/Purple */
+    /* --- End Gradient Border --- */
 }
 
-/* Remove Hover Effect */
 .container:hover {
    transform: none;
-   box-shadow: var(--box-shadow); /* Keep default shadow, no hover change */
+   box-shadow: var(--box-shadow); 
 }
 
-/* Restore Output Container Linear Gradient OVER Sketchy Styles */
+/* Remove specific background/border overrides so these inherit the style */
 .output-container {
-    /* Explicitly set combined style */
-    border: 2px dashed var(--border-color);
-    background-image: 
-        repeating-linear-gradient(
-            -45deg,
-            rgba(255, 255, 255, 0.02),
-            rgba(255, 255, 255, 0.02) 1px,
-            transparent 1px,
-            transparent 6px
-        ),
-        linear-gradient(180deg, /* Top to Bottom */
-            var(--card-background) 0%, /* Darker color at the top */
-            #243642 100% /* Lighter color at the bottom */
-        );
-    box-shadow: var(--box-shadow); /* Use base shadow */
-    border-radius: var(--border-radius);
-    background-color: transparent; /* Let gradients show */
+    /* Inherits style */
 }
-
-.output-container:hover {
-   box-shadow: var(--box-shadow); /* No hover change */
-}
-
-/* History Container - Explicitly set combined style */
 .history-container {
-    border: 2px dashed var(--border-color);
-    background-image: 
-        repeating-linear-gradient(
-            -45deg,
-            rgba(255, 255, 255, 0.02),
-            rgba(255, 255, 255, 0.02) 1px,
-            transparent 1px,
-            transparent 6px
-        ),
-        radial-gradient(ellipse at center, 
-            #243642 0%, /* Lighter color in center */
-            var(--card-background) 100% /* Darker card background at edges */
-        ); /* Base gradient underneath */
-    box-shadow: var(--box-shadow); /* Use base shadow */
-    border-radius: var(--border-radius);
-    background-color: transparent; /* Let gradients show */
-}
-
-.history-container:hover {
-     box-shadow: var(--box-shadow); /* No hover change */
+     /* Inherits style */
 }
 
 h1 {
     text-align: center;
-    color: var(--text-color);
-    font-weight: 700; /* Bolder */
-    margin-bottom: 40px; /* More space */
-    font-size: 2rem; /* Larger */
+    color: var(--text-color); /* Fallback color */
+    font-weight: 700; 
+    margin-bottom: 40px; 
+    font-size: 2rem; 
+
+    /* Apply Text Gradient */
+    background: linear-gradient(90deg, var(--primary-color), #C774E8); /* Use the same gradient as border */
+    background-clip: text;
+    -webkit-background-clip: text; /* For wider browser support */
+    color: transparent; /* Make the text color transparent */
+    /* Optional: Adjust display if needed, but inline-block might affect centering */
+    /* display: inline-block; */ 
 }
 
 h2 {
@@ -182,9 +142,9 @@ h2 {
     border-radius: var(--border-radius);
     font-size: 1rem;
     resize: vertical;
-    background-color: var(--input-background);
+    background-color: #000000; /* SET TO BLACK */
     color: var(--text-color);
-    box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+    box-shadow: none;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -209,6 +169,7 @@ h2 {
     opacity: 0.7;
 }
 
+/* Use new focus variables, keep background black */
 .prompt-section textarea:focus,
 #svg-code-editor:focus,
 #analysis-prompt:focus,
@@ -216,7 +177,7 @@ h2 {
     outline: none;
     border-color: var(--input-focus-border);
     box-shadow: 0 0 0 2px var(--input-focus-shadow);
-    background-color: #3a3c4c; /* Slightly lighter focus background */
+    background-color: #000000; /* KEEP BLACK ON FOCUS */
 }
 
 /* Style Options */
@@ -536,8 +497,8 @@ h3 {
 
 /* Update History List Hover Color */
 #history-list li:hover {
-    /* Subtle primary accent hover (new orange) */
-    background-color: rgba(242, 153, 74, 0.1); /* #F2994A hover */
+    /* Use new primary color RGB */
+    background-color: rgba(230, 149, 0, 0.25); /* Adjusted Orange #E69500 at 25% opacity */
 }
 
 #history-list li .prompt-snippet {
@@ -923,20 +884,21 @@ h3 {
     resize: vertical; /* Allow vertical resizing only */
     overflow-y: hidden; /* Prevent scrollbar */
     padding: 0.8rem;
-    background-color: var(--input-bg-color);
+    background-color: #000000; /* SET TO BLACK */
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
-    color: var(--text-color); /* Reverted to default text color */
+    color: var(--text-color); 
     font-family: inherit;
     font-size: 0.9rem;
     line-height: 1.4;
-    box-sizing: border-box; /* Include padding and border in the element's total width and height */
+    box-sizing: border-box; 
 }
 
 #analysis-results-section textarea:focus {
     outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.2);
+    border-color: var(--input-focus-border); /* Use variable */
+    box-shadow: 0 0 0 2px var(--input-focus-shadow); /* Use variable */
+    background-color: #000000; /* KEEP BLACK ON FOCUS */
 }
 
 /* Ensure Convert button has some top margin when it appears */
@@ -1055,17 +1017,20 @@ h3 {
 
 /* Primary Buttons (Generate, Analyze, Refine, etc.) */
 .primary-btn {
-    background-color: var(--primary-color);
-    color: white;
-    border: none; /* Primary buttons usually don't need a border */
+    background-color: var(--primary-color); /* Firebase Orange */
+    color: var(--text-color); /* White text */
+    border: none; 
+    box-shadow: var(--button-shadow); /* Use variable (none) */
+    font-weight: 600;
 }
 .primary-btn:hover {
-    background-color: var(--primary-hover);
-    box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.25), 0 3px 4px -1px rgba(0, 0, 0, 0.2); /* Restore hover shadow */
+    background-color: var(--primary-hover); /* Darker Orange */
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.2); /* Subtle shadow on hover */
 }
 .primary-btn:disabled {
-    background-color: #a07552; /* Muted orange for disabled */
-    color: #e0d6ce;
+    background-color: #a36800; /* Muted orange for disabled */
+    color: var(--text-light); /* Light grey text */
+    opacity: 0.7;
     cursor: not-allowed;
     box-shadow: none;
     border: none;
@@ -1073,21 +1038,22 @@ h3 {
 
 /* Secondary Buttons (Save, Clear, Copy Markdown) */
 .secondary-btn {
-    background-color: var(--input-background);
-    color: var(--text-light);
-    border: 1px solid var(--border-color);
+    background-color: var(--input-background); /* Dark Grey */
+    color: var(--text-light); /* Light Grey Text */
+    border: 1px solid var(--border-color); /* Subtle border */
     font-weight: 500;
-    box-shadow: none;
+    box-shadow: var(--button-shadow); /* Use variable (none) */
 }
 .secondary-btn:hover {
-    background-color: var(--border-color); /* Use border color for hover */
+    background-color: var(--border-color); /* Slightly lighter grey */
     border-color: var(--secondary-color);
     color: var(--text-color);
 }
 .secondary-btn:disabled {
     background-color: var(--input-background);
-    color: #64748b;
+    color: #757575; /* Grey 50 */
     border-color: var(--border-color);
+    opacity: 0.6;
     cursor: not-allowed;
     box-shadow: none;
 }
@@ -1210,4 +1176,26 @@ button:disabled {
     color: var(--text-secondary);
     margin-left: 5px;
     font-style: italic;
+}
+
+/* Loading Spinner Styles */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-spinner {
+    display: none; /* Hidden by default */
+    width: 1em; /* Size relative to font size */
+    height: 1em;
+    border: 2px solid rgba(255, 255, 255, 0.2); /* Light border */
+    border-top-color: var(--primary-color); /* Use accent color for spinner part */
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    vertical-align: middle; /* Align with text */
+    margin-right: 8px; /* Space between spinner and status text */
+}
+
+.loading-spinner.visible {
+    display: inline-block; /* Show when visible class is added */
 } 
