@@ -25,20 +25,24 @@ def format_svg_prompt(user_prompt: str, complexity: int | None = None, colorUsag
     # --- Slider Hints --- 
     hints = []
     if complexity is not None:
-        if complexity <= 3:
-            hints.append("Keep the shapes and structure very simple.")
-        elif complexity >= 8:
-            hints.append("Incorporate intricate details, potentially multiple overlapping elements or complex paths.")
-        else:
+        if not 1 <= complexity <= 6:
+            complexity = 3 # Default to mid if value is out of range
+        if complexity <= 2:
+            hints.append("Keep the shapes and structure very simple (low complexity).")
+        elif complexity >= 5:
+            hints.append("Incorporate intricate details, potentially multiple overlapping elements or complex paths (high complexity).")
+        else: # complexity is 3 or 4
             hints.append("Aim for moderate complexity.")
     
     if colorUsage is not None:
+        if not 1 <= colorUsage <= 6:
+            colorUsage = 3 # Default to mid if value is out of range
         if colorUsage <= 2:
-            hints.append("Use a very limited color palette, possibly monochrome or just 2-3 colors.")
-        elif colorUsage >= 7:
-            hints.append("Feel free to use a rich and diverse color palette.")
-        else:
-            hints.append("Use a balanced number of colors.")
+            hints.append("Use a very limited color palette, possibly monochrome or just 2-3 colors (low color usage).")
+        elif colorUsage >= 5:
+            hints.append("Feel free to use a rich and diverse color palette (high color usage).")
+        else: # colorUsage is 3 or 4
+            hints.append("Use a balanced number of colors (moderate color usage).")
 
     hints_string = " Design Hints: " + " ".join(hints) if hints else ""
 

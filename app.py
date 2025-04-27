@@ -1,7 +1,7 @@
 import os
 import google.generativeai as genai
 from flask import Flask, request, jsonify, render_template
-from config import google_api_key # Import the API key
+# from config import google_api_key # Import the API key - REMOVED
 import re
 from prompt_utils import format_svg_prompt, format_analysis_prompt # Import the prompt formatting utility and new function
 from typing import Optional, Dict, Any # Import Dict, Any
@@ -17,23 +17,24 @@ generation_config: Optional[genai.types.GenerationConfig] = None
 
 load_dotenv()
 
-# Configure the Gemini API key
+# Configure the Gemini API key from environment variable ONLY
 api_key = os.getenv("GOOGLE_API_KEY")
-if not api_key:
-    raise ValueError("GOOGLE_API_KEY environment variable not set.")
-genai.configure(api_key=api_key)
-
-if google_api_key:
+if api_key:
     try:
-        genai.configure(api_key=google_api_key)
-        # Remove global model init
-        # model = genai.GenerativeModel('gemini-2.0-flash')
+        genai.configure(api_key=api_key)
+        # Set generation config here
         # Hard-set temperature to 1.0
         generation_config = genai.types.GenerationConfig(temperature=1.0)
+        print("Gemini API Key configured successfully.")
     except Exception as e:
         print(f"Error configuring Google AI SDK: {e}")
+        # Ensure config is None if setup fails
+        generation_config = None
+        api_key = None # Indicate API is not usable
 else:
-    print("Warning: Google AI API Key not found. AI features will be disabled.")
+    print("Warning: GOOGLE_API_KEY environment variable not set. AI features will be disabled.")
+    # Ensure config is None if key is missing
+    generation_config = None
 
 app = Flask(__name__)
 
@@ -77,8 +78,9 @@ def index():
 @app.route('/generate', methods=['POST'])
 def generate_svg():
     """Handles SVG generation requests using the selected model."""
-    if not google_api_key or not generation_config: # Check if API key configured and config exists
-        return jsonify({"error": "AI SDK not configured."}), 503
+    # Use api_key (from env var) and check generation_config
+    if not api_key or not generation_config:
+        return jsonify({"error": "AI SDK not configured or API key missing."}), 503
 
     if not request.is_json:
         return jsonify({"error": "Request must be JSON"}), 400

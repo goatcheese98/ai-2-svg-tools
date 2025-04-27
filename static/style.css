@@ -411,7 +411,28 @@ button:disabled {
     border-radius: var(--border-radius);
     padding: 10px;
     box-sizing: border-box;
+    transition: background-color 0.2s ease; /* Add transition for background change */
 }
+
+/* Background Classes for Preview Box */
+.preview-box.bg-transparent {
+    background-color: transparent;
+    /* Use a more subtle pattern */
+    background-image: linear-gradient(45deg, rgba(255, 255, 255, 0.05) 25%, transparent 25%), linear-gradient(-45deg, rgba(255, 255, 255, 0.05) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, rgba(255, 255, 255, 0.05) 75%), linear-gradient(-45deg, transparent 75%, rgba(255, 255, 255, 0.05) 75%);
+    background-size: 30px 30px; /* Larger squares */
+    background-position: 0 0, 0 15px, 15px -15px, -15px 0px; /* Adjust position for new size */
+}
+
+.preview-box.bg-white {
+    background-color: white;
+    background-image: none; /* Remove transparent pattern */
+}
+
+.preview-box.bg-black {
+    background-color: #1f2937; /* Use a dark color from the theme */
+    background-image: none; /* Remove transparent pattern */
+}
+
 /* Style SVG elements for better visibility on dark bg if needed */
 #svg-preview svg * {
     /* Example: Ensure default stroke isn't black if background is very dark */
@@ -427,6 +448,43 @@ button:disabled {
 /* Update Preview placeholder text color */
 .preview-box p {
     color: var(--text-light); /* Ensure placeholder text is visible */
+}
+
+/* Preview Background Controls Styling */
+.preview-background-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px; /* Space before preview box */
+}
+
+.preview-background-controls label {
+    font-size: 0.9rem;
+    color: var(--text-light);
+    margin-right: 5px;
+}
+
+.bg-control-btn {
+    background-color: var(--input-background);
+    color: var(--text-light);
+    border: 1px solid var(--border-color);
+    padding: 5px 10px;
+    font-size: 0.8rem;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.bg-control-btn:hover {
+    background-color: var(--border-color);
+    border-color: var(--secondary-color);
+}
+
+.bg-control-btn.active {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+    font-weight: 500;
 }
 
 /* History Section */
@@ -513,13 +571,63 @@ h3 {
 
 /* Removed Post-Generation Controls CSS */
 
-/* Slider Controls */
-.slider-controls {
-    margin-bottom: 25px;
+/* Generator Options (Button Groups) */
+.generator-options {
     display: flex;
-    flex-direction: column; /* Stack sliders vertically */
+    flex-direction: column; /* Stack groups vertically */
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.control-button-group {
+    display: flex;
+    align-items: center;
     gap: 15px;
 }
+
+.control-button-group label {
+    flex-shrink: 0;
+    font-size: 0.95rem;
+    color: var(--text-light);
+    width: 100px; /* Adjust width as needed */
+}
+
+.control-button-group .buttons {
+    display: flex;
+    gap: 5px;
+}
+
+.control-button {
+    background-color: var(--input-background);
+    color: var(--text-light);
+    border: 1px solid var(--border-color);
+    padding: 6px 12px; /* Smaller padding for number buttons */
+    font-size: 0.9rem;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    min-width: 40px; /* Ensure buttons have a minimum width */
+    text-align: center;
+    font-weight: 500;
+}
+
+.control-button:hover {
+    background-color: var(--border-color);
+    border-color: var(--secondary-color);
+}
+
+.control-button.active {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+    font-weight: 600;
+}
+
+/* Slider Controls */
+/* Remove slider styles if no longer needed */
+/* .slider-controls { ... } */
+/* .slider-group { ... } */
+/* .slider-value { ... } */
 
 /* Generate Controls (Button + Model Selector) */
 .generate-controls {

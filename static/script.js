@@ -21,11 +21,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const pngWidthInput = document.getElementById('png-width-input'); // PNG Width Input
     const pngHeightInput = document.getElementById('png-height-input'); // PNG Height Input
 
-    // Slider Controls
-    const complexitySlider = document.getElementById('complexity-slider');
-    const complexityValueSpan = document.getElementById('complexity-value');
-    const colorSlider = document.getElementById('color-slider');
-    const colorValueSpan = document.getElementById('color-value');
+    // Background Control Elements
+    const backgroundControlButtons = document.querySelectorAll('.bg-control-btn');
+
+    // Button Group Controls
+    const complexityButtons = document.querySelectorAll('#complexity-buttons .control-button');
+    const colorUsageButtons = document.querySelectorAll('#color-usage-buttons .control-button');
+
+    // Model Select
     const modelSelect = document.getElementById('model-select'); // Add reference
 
     // Extractor Tab Elements (MVP - Input Only)
@@ -163,6 +166,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Get selected values from button groups
+    function getSelectedButtonValue(buttons) {
+        for (const button of buttons) {
+            if (button.classList.contains('active')) {
+                return parseInt(button.dataset.value, 10);
+            }
+        }
+        return 3; // Default if none selected (shouldn't happen with default active)
+    }
+
     // Function to handle generation request
     async function handleGenerate() {
         const currentPrompt = promptInput.value.trim();
@@ -171,8 +184,9 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const complexity = parseInt(complexitySlider.value, 10);
-        const colorUsage = parseInt(colorSlider.value, 10);
+        // --- UPDATE: Get values from buttons --- 
+        const complexity = getSelectedButtonValue(complexityButtons);
+        const colorUsage = getSelectedButtonValue(colorUsageButtons);
         const selectedModel = modelSelect.value; // Get selected model
 
         // Update UI: Start Loading
@@ -196,6 +210,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Update UI: Success
                 _update_generation_ui(false, 'SVG generated successfully!');
 
+                // --- UPDATE: Pass button values to history --- 
                 saveHistoryItem(currentPrompt, complexity, colorUsage, selectedModel, generatedSvgCode);
                 updateHistoryList();
 
@@ -319,12 +334,15 @@ document.addEventListener('DOMContentLoaded', () => {
         currentHistory.forEach((item, index) => {
             const li = document.createElement('li');
 
-            // Construct display text with version number
+            // --- UPDATE: Display 1-6 values in history --- 
             const versionString = item.version ? ` (v${item.version})` : ''; // Add version if it exists
-            const parametersString = `(Cmplx:${item.complexity}, ClrUse:${item.colorUsage}, M:${item.model || 'Default'})`;
+            const parametersString = `(Cmplx:${item.complexity}, Clr:${item.colorUsage}, M:${item.model || 'Default'})`; // Use short labels
             const timestampString = new Date(item.timestamp).toLocaleString(); // Ensure consistent formatting
 
-            li.textContent = `${item.prompt}${versionString} ${parametersString}`;
+            const promptSpan = document.createElement('span');
+            promptSpan.className = 'prompt-snippet';
+            promptSpan.textContent = `${item.prompt}${versionString} ${parametersString}`;
+            li.appendChild(promptSpan);
 
             const timestampSpan = document.createElement('span');
             timestampSpan.className = 'timestamp';
@@ -346,10 +364,16 @@ document.addEventListener('DOMContentLoaded', () => {
             const item = currentHistory[index];
             // Update generator controls
             promptInput.value = item.prompt;
-            complexitySlider.value = item.complexity;
-            colorSlider.value = item.colorUsage;
-            complexityValueSpan.textContent = item.complexity;
-            colorValueSpan.textContent = item.colorUsage;
+
+            // --- UPDATE: Set active buttons based on history --- 
+            setActiveButton(complexityButtons, item.complexity);
+            setActiveButton(colorUsageButtons, item.colorUsage);
+
+            // Remove slider updates
+            // complexitySlider.value = item.complexity;
+            // colorSlider.value = item.colorUsage;
+            // complexityValueSpan.textContent = item.complexity;
+            // colorValueSpan.textContent = item.colorUsage;
             if (modelSelect && item.model) modelSelect.value = item.model; // Update model dropdown
 
             // Update SVG output
@@ -368,14 +392,72 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- Slider Update Listeners ---
-    complexitySlider.addEventListener('input', (event) => {
-        complexityValueSpan.textContent = event.target.value;
+    // --- Button Group Logic ---
+    function handleButtonClick(event, buttons) {
+        // Remove active class from all buttons in the group
+        buttons.forEach(btn => btn.classList.remove('active'));
+        // Add active class to the clicked button
+        event.target.classList.add('active');
+    }
+
+    complexityButtons.forEach(button => {
+        button.addEventListener('click', (e) => handleButtonClick(e, complexityButtons));
     });
 
-    colorSlider.addEventListener('input', (event) => {
-        colorValueSpan.textContent = event.target.value;
+    colorUsageButtons.forEach(button => {
+        button.addEventListener('click', (e) => handleButtonClick(e, colorUsageButtons));
     });
+
+    // Helper to set active button based on value
+    function setActiveButton(buttons, value) {
+        buttons.forEach(btn => {
+            if (parseInt(btn.dataset.value, 10) === value) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+    }
+    // --- End Button Group Logic ---
+
+    // --- Background Control Logic ---
+    backgroundControlButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const selectedBg = button.dataset.bg;
+
+            // Remove active class from all buttons
+            backgroundControlButtons.forEach(btn => btn.classList.remove('active'));
+            // Add active class to the clicked button
+            button.classList.add('active');
+
+            // Update preview box class
+            svgPreview.classList.remove('bg-transparent', 'bg-white', 'bg-black');
+            svgPreview.classList.add(`bg-${selectedBg}`);
+
+             // Persist preference in local storage
+             localStorage.setItem('previewBackground', selectedBg);
+        });
+    });
+
+    // Function to apply persisted background preference on load
+    function applyPersistedBackground() {
+        const persistedBg = localStorage.getItem('previewBackground') || 'transparent'; // Default to transparent
+        svgPreview.classList.remove('bg-transparent', 'bg-white', 'bg-black');
+        svgPreview.classList.add(`bg-${persistedBg}`);
+
+        // Update active button state
+        backgroundControlButtons.forEach(btn => {
+            if (btn.dataset.bg === persistedBg) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+    }
+
+    // Call this function after the DOM is fully loaded
+    applyPersistedBackground();
+    // --- End Background Control Logic ---
 
     // Event Listeners
     generateBtn.addEventListener('click', handleGenerate);
@@ -825,8 +907,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 refineStatus.style.color = 'green';
                 // ... (Save to history) ...
                 const currentPrompt = promptInput.value.trim(); 
-                const complexity = parseInt(complexitySlider.value, 10);
-                const colorUsage = parseInt(colorSlider.value, 10);
+                const complexity = parseInt(complexityButtons.find(btn => btn.classList.contains('active')).dataset.value, 10);
+                const colorUsage = parseInt(colorUsageButtons.find(btn => btn.classList.contains('active')).dataset.value, 10);
                 saveHistoryItem(currentPrompt + ` (Refined${refinementInstructions ? ': ' + refinementInstructions.substring(0,20) + '...': ' - Auto'})`, complexity, colorUsage, selectedModel, refinedSvgCode);
                 updateHistoryList();
             } else {
