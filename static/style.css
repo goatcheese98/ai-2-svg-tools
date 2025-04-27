@@ -577,6 +577,86 @@ h3 {
     .preview-box {
         height: 350px;
     }
+
+    /* Adjust control button groups for mobile */
+    .control-button-group {
+        /* Revert to row layout, allow wrapping */
+        flex-direction: row; 
+        align-items: center; /* Vertically center items */
+        flex-wrap: wrap; /* Allow wrapping */
+        gap: 8px 10px; /* Row and Column gaps */
+    }
+
+    .control-button-group label {
+        width: auto; 
+        margin-bottom: 0; /* Remove bottom margin */
+        flex-shrink: 0; /* Prevent label from shrinking */
+        /* order: 1; */ 
+    }
+
+    .control-button-group .buttons {
+        /* Buttons group takes available space */
+        justify-content: flex-start; 
+        width: auto; /* Allow natural width */
+        flex-grow: 1; /* Allow button group to grow */
+        /* order: 2; */ 
+    }
+
+    /* Position tooltip icon logically */
+    .control-button-group .tooltip-icon {
+        margin-left: auto; /* Push to the right end of the line */
+        margin-top: 0; /* Remove top margin */
+        align-self: center; /* Keep vertically centered */
+        flex-shrink: 0; /* Prevent shrinking */
+        /* order: 3; */ 
+    }
+
+    /* Ensure model selectors and buttons stack nicely */
+    .generate-controls,
+    .extractor-actions,
+    .refinement-actions {
+        align-items: stretch; /* Make children take full width */
+    }
+    .generate-controls .model-selector,
+    .extractor-actions .extractor-model-selector,
+    .refinement-actions .refine-model-selector {
+        max-width: none; /* Allow full width */
+        flex-wrap: wrap; /* Allow icon to wrap */
+        gap: 5px 8px; /* Adjust row/column gap */
+    }
+    /* Ensure label and select take most space, icon wraps */
+    .generate-controls .model-selector > label,
+    .generate-controls .model-selector > select,
+    .extractor-actions .extractor-model-selector > label,
+    .extractor-actions .extractor-model-selector > select,
+    .refinement-actions .refine-model-selector > label,
+    .refinement-actions .refine-model-selector > select {
+       flex-basis: auto; /* Allow shrinking/growing */
+       flex-grow: 1;
+    }
+    .generate-controls .model-selector > select,
+    .extractor-actions .extractor-model-selector > select,
+    .refinement-actions .refine-model-selector > select {
+        min-width: 150px; /* Prevent select from becoming too small */
+    }
+    
+    .generate-controls .model-selector > .tooltip-icon,
+    .extractor-actions .extractor-model-selector > .tooltip-icon,
+    .refinement-actions .refine-model-selector > .tooltip-icon {
+        flex-shrink: 0; /* Prevent icon shrinking */
+        margin-left: auto; /* Push icon right initially */
+        margin-top: 5px; /* Add margin when wrapped */
+        /* If wrapping occurs, center it below */
+        /* This might require the container to be display: block or adjust flex */
+    }
+
+    .generate-controls #generate-btn,
+    .extractor-actions #analyze-btn,
+    .refinement-actions #refine-btn {
+        width: 100%; /* Make buttons full width */
+        text-align: center;
+    }
+
 }
 
 /* Removed Post-Generation Controls CSS */
@@ -1342,15 +1422,23 @@ button:disabled {
 
 /* Media Query for smaller screens (e.g., mobile) */
 @media (max-width: 600px) {
-    .tooltip-icon::after {
-        /* Reposition below the icon */
-        top: 140%; /* Adjust vertical distance below icon */
-        left: 50%; 
-        transform: translateX(-50%); /* Center horizontally relative to icon */
+    /* Ensure icon is a positioning context */
+    .tooltip-icon {
+        position: relative;
+    }
 
-        /* Adjust width for smaller screens */
-        max-width: calc(100vw - 40px); /* Example: Full viewport width minus some padding */
-        width: auto; /* Let it take needed width up to max-width */
+    .tooltip-icon::after {
+        /* Position centered below the icon */
+        top: calc(100% + 8px); /* Position below icon + small gap */
+        left: 50%;  
+        transform: translateX(-50%); /* Center horizontally */
+        right: auto; /* Remove right constraint */
+
+        /* Width constrained by viewport */
+        width: auto; /* Allow width to fill space up to max */
+        max-width: calc(100vw - 40px); /* Max width with 20px padding each side */
+        white-space: normal; /* Ensure text wraps */
+        text-align: left;
     }
 }
 /* --- End Tooltip Styles --- */ 
