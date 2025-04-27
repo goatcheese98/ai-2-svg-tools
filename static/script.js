@@ -20,10 +20,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const savePngBtn = document.getElementById('save-png-btn'); // New PNG save button reference
     const pngWidthInput = document.getElementById('png-width-input'); // PNG Width Input
     const pngHeightInput = document.getElementById('png-height-input'); // PNG Height Input
+    const saveCustomPngBtn = document.getElementById('save-custom-png-btn'); // ADDED
     const generateSpinner = document.getElementById('generate-spinner'); // ADDED
 
     // Background Control Elements
     const backgroundControlButtons = document.querySelectorAll('.bg-control-btn');
+    const customBgButton = document.getElementById('bg-custom-btn'); // New
+    const customBgColorPicker = document.getElementById('bg-custom-color-picker'); // New
+    const customBgHexDisplay = document.getElementById('bg-custom-hex'); // New
 
     // Button Group Controls
     const complexityButtons = document.querySelectorAll('#complexity-buttons .control-button');
@@ -61,6 +65,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const refineStatus = document.getElementById('refine-status');
     const refineSpinner = document.getElementById('refine-spinner'); // ADDED
 
+    // Shared Output & History Containers (for hiding/showing)
+    const outputContainer = document.querySelector('.output-container'); // ADDED
+    const historyContainer = document.querySelector('.history-container'); // ADDED
+
     // Store image data temporarily
     let currentImageDataUrl = null;
 
@@ -96,6 +104,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (targetButton) {
             targetButton.classList.add('active');
         }
+
+        // --- ADDED: Show/Hide Shared Sections --- 
+        if (targetTabId === 'how-to-use-tab-content') {
+            if (outputContainer) outputContainer.style.display = 'none';
+            if (historyContainer) historyContainer.style.display = 'none';
+        } else {
+            // Show for Generator or Extractor tabs
+            if (outputContainer) outputContainer.style.display = 'block'; // Or 'flex' if it uses flex layout
+            if (historyContainer) historyContainer.style.display = 'block';
+        }
+        // --- END ADDED SECTION --- 
     }
 
     tabButtons.forEach(button => {
@@ -147,12 +166,35 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Function to update SVG preview
+    // Function to update SVG preview AND dependent button states
     function updatePreview(svgCode) {
         // Clear previous preview content
         svgPreview.innerHTML = '';
+        const svgPresent = svgCode && svgCode.trim().length > 0;
 
-        if (!svgCode.trim()) {
+        // Enable/disable SVG-dependent buttons
+        copyBtn.disabled = !svgPresent;
+        saveBtn.disabled = !svgPresent;
+        savePngBtn.disabled = !svgPresent;
+        
+        // Update button styles based on state (optional but nice)
+        [copyBtn, saveBtn, savePngBtn].forEach(btn => {
+            if (!svgPresent) {
+                btn.classList.remove('primary-btn');
+                btn.classList.add('secondary-btn');
+            } else {
+                // Turn Save buttons orange when enabled
+                if (btn !== copyBtn) { 
+                    btn.classList.add('primary-btn');
+                    btn.classList.remove('secondary-btn');
+                }
+            }
+        });
+        
+        // Reset custom PNG button state when preview changes
+        resetCustomPngButtonState();
+
+        if (!svgPresent) {
             svgPreview.innerHTML = '<p style="color: #999;">Preview will appear here.</p>';
             return;
         }
@@ -443,20 +485,58 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Background Control Logic ---
     backgroundControlButtons.forEach(button => {
         button.addEventListener('click', () => {
-            const selectedBg = button.dataset.bg;
-
-            // Remove active class from all buttons
+            // Deactivate all buttons first
             backgroundControlButtons.forEach(btn => btn.classList.remove('active'));
-            // Add active class to the clicked button
+            // Activate the clicked button
             button.classList.add('active');
 
-            // Update preview box class
-            svgPreview.classList.remove('bg-transparent', 'bg-white', 'bg-black');
-            svgPreview.classList.add(`bg-${selectedBg}`);
-
-             // Persist preference in local storage
-             localStorage.setItem('previewBackground', selectedBg);
+            const bgType = button.getAttribute('data-bg');
+            console.log(`Background button clicked: ID=${button.id}, Type=${bgType}, Active=${button.classList.contains('active')}`); // DEBUG LOG
+            
+            // Explicitly hide custom elements initially
+            customBgColorPicker.style.display = 'none';
+            customBgHexDisplay.style.display = 'none';
+            
+            // Apply background based on type
+            if (bgType === 'transparent') {
+                svgPreview.classList.remove('bg-white', 'bg-black');
+                svgPreview.classList.add('bg-transparent');
+                svgPreview.style.backgroundColor = ''; // Remove inline style
+            } else if (bgType === 'white') {
+                svgPreview.classList.remove('bg-transparent', 'bg-black');
+                svgPreview.classList.add('bg-white');
+                svgPreview.style.backgroundColor = ''; // Remove inline style
+            } else if (bgType === 'black') {
+                svgPreview.classList.remove('bg-transparent', 'bg-white');
+                svgPreview.classList.add('bg-black');
+                svgPreview.style.backgroundColor = ''; // Remove inline style
+            } else if (bgType === 'custom') {
+                // Show the custom elements
+                customBgColorPicker.style.display = 'inline-block';
+                customBgHexDisplay.style.display = 'inline-block';
+                
+                // Apply the *current* color picker value when Custom is selected (RE-ENABLED to set initial state)
+                const currentColor = customBgColorPicker.value; 
+                svgPreview.classList.remove('bg-transparent', 'bg-white', 'bg-black');
+                svgPreview.style.backgroundColor = currentColor; 
+                customBgHexDisplay.textContent = customBgColorPicker.value; 
+            }
+            
+            // Hide/Show custom picker elements (CSS handles this now based on .active class)
+            // The JS only needs to set the .active class correctly
         });
+    });
+
+    // Custom Background Color Picker Input
+    customBgColorPicker.addEventListener('input', () => {
+        const newColor = customBgColorPicker.value;
+        console.log(`Color picker input: NewColor=${newColor}, IsCustomActive=${customBgButton.classList.contains('active')}`); // DEBUG LOG
+        customBgHexDisplay.textContent = newColor;
+        // Only apply if the custom button is actually active (this check remains correct)
+        if (customBgButton.classList.contains('active')) {
+            svgPreview.style.backgroundColor = newColor;
+            svgPreview.classList.remove('bg-transparent', 'bg-white', 'bg-black'); // Ensure no classes interfere
+        }
     });
 
     // Function to apply persisted background preference on load
@@ -482,17 +562,35 @@ document.addEventListener('DOMContentLoaded', () => {
     // Event Listeners
     generateBtn.addEventListener('click', handleGenerate);
 
-    // Update preview on code editor input (with debouncing)
+    // Update preview and related buttons on code editor input 
     svgCodeEditor.addEventListener('input', () => {
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => {
-            updatePreview(svgCodeEditor.value);
+            updatePreview(svgCodeEditor.value); // Update preview + buttons
+            updateCustomPngButtonState(); // Also check custom PNG button state
         }, 300);
     });
 
+    // Check custom PNG button state when dimension inputs change
+    if (pngWidthInput) pngWidthInput.addEventListener('input', updateCustomPngButtonState);
+    if (pngHeightInput) pngHeightInput.addEventListener('input', updateCustomPngButtonState);
+
+    // Save SVG button listener (already exists, state handled by updatePreview)
     saveBtn.addEventListener('click', handleSave);
+
+    // Copy code button listener (already exists, state handled by updatePreview)
     copyBtn.addEventListener('click', handleCopy);
-    clearHistoryBtn.addEventListener('click', clearHistory); // Add listener for clear button
+    
+    // History listeners (already exist)
+    clearHistoryBtn.addEventListener('click', clearHistory);
+
+    // PNG Button Listeners (updated earlier to pass flags)
+    if (saveCustomPngBtn) {
+        saveCustomPngBtn.addEventListener('click', (e) => handleSavePng(e, true)); // Pass true
+    }
+    if (savePngBtn) {
+        savePngBtn.addEventListener('click', (e) => handleSavePng(e, false)); // Pass false
+    }
 
     // --- Extractor Tab Functions (MVP - Image Preview Only) ---
     function handleFileSelect(file) {
@@ -1046,40 +1144,55 @@ document.addEventListener('DOMContentLoaded', () => {
     // Function to update PNG dimension inputs based on aspect ratio
     function updatePngDimensions(changedInput) {
         const svgElement = svgPreview.querySelector('svg');
-        if (!svgElement) return; // No SVG, can't calculate
+        if (!svgElement) {
+            console.warn("updatePngDimensions: No SVG found in preview.");
+            return; // No SVG, can't calculate
+        }
 
         // Recalculate aspect ratio from current SVG
         let svgWidth = svgElement.getAttribute('width') || svgElement.viewBox?.baseVal?.width || 300;
         let svgHeight = svgElement.getAttribute('height') || svgElement.viewBox?.baseVal?.height || 150;
-        svgWidth = parseFloat(svgWidth) || 300;
-        svgHeight = parseFloat(svgHeight) || 1;
+        svgWidth = parseFloat(svgWidth) || 300; // Fallback width
+        svgHeight = parseFloat(svgHeight) || 1; // Fallback height > 0
+        
+        // Ensure height is not zero for division
+        if (svgHeight <= 0) svgHeight = 1; 
         currentSvgAspectRatio = svgWidth / svgHeight;
+        console.log("SVG Aspect Ratio:", currentSvgAspectRatio);
 
         const widthInput = pngWidthInput;
         const heightInput = pngHeightInput;
-        const widthVal = parseInt(widthInput.value, 10);
-        const heightVal = parseInt(heightInput.value, 10);
+        // Handle NaN from parseInt if input is empty or invalid
+        const widthVal = parseInt(widthInput.value, 10) || 0;
+        const heightVal = parseInt(heightInput.value, 10) || 0;
+        console.log("Parsed Dimensions:", { widthVal, heightVal });
 
         if (changedInput === widthInput && widthVal > 0) {
-            heightInput.value = Math.round(widthVal / currentSvgAspectRatio);
-            heightInput.placeholder = Math.round(widthVal / currentSvgAspectRatio); // Update placeholder too
-            heightInput.classList.add('auto-populated'); // Optional: Style auto-populated field
+            const calculatedHeight = Math.round(widthVal / currentSvgAspectRatio);
+            heightInput.value = calculatedHeight;
+            heightInput.placeholder = calculatedHeight; 
+            heightInput.classList.add('auto-populated');
             widthInput.classList.remove('auto-populated');
+            console.log("Calculated Height:", calculatedHeight);
         } else if (changedInput === heightInput && heightVal > 0) {
-            widthInput.value = Math.round(heightVal * currentSvgAspectRatio);
-            widthInput.placeholder = Math.round(heightVal * currentSvgAspectRatio);
+            const calculatedWidth = Math.round(heightVal * currentSvgAspectRatio);
+            widthInput.value = calculatedWidth;
+            widthInput.placeholder = calculatedWidth;
             widthInput.classList.add('auto-populated');
             heightInput.classList.remove('auto-populated');
+            console.log("Calculated Width:", calculatedWidth);
         } else {
             // If input cleared or invalid, clear the other and reset placeholders/styles
             if (changedInput === widthInput) {
                 heightInput.value = '';
-                heightInput.placeholder = '(auto)';
+                heightInput.placeholder = '(auto-scales)';
                 heightInput.classList.remove('auto-populated');
+                console.log("Cleared Height Input");
             } else if (changedInput === heightInput) {
                 widthInput.value = '';
-                widthInput.placeholder = '(auto)';
+                widthInput.placeholder = '(auto-scales)';
                 widthInput.classList.remove('auto-populated');
+                 console.log("Cleared Width Input");
             }
         }
     }
@@ -1090,7 +1203,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Update Save PNG Functionality ---
-    async function handleSavePng() {
+    async function handleSavePng(event, useCustomDimensions = false) {
         const svgPreviewDiv = document.getElementById('svg-preview');
         const svgElement = svgPreviewDiv.querySelector('svg');
 
@@ -1106,47 +1219,56 @@ document.addEventListener('DOMContentLoaded', () => {
         let svgWidth = svgElement.getAttribute('width') || svgElement.viewBox?.baseVal?.width || 300; 
         let svgHeight = svgElement.getAttribute('height') || svgElement.viewBox?.baseVal?.height || 150; 
         svgWidth = parseFloat(svgWidth) || 300;
-        svgHeight = parseFloat(svgHeight) || 150;
+        svgHeight = parseFloat(svgHeight) || 150; // Keep a reasonable default height
+        // Ensure height is not zero for division
+        if (svgHeight <= 0) svgHeight = 150; 
         const aspectRatio = svgWidth / svgHeight;
 
         let canvasWidth, canvasHeight;
-        const userWidth = parseInt(pngWidthInput.value, 10);
-        const userHeight = parseInt(pngHeightInput.value, 10);
-
+        
         // --- Determine Canvas Dimensions --- 
-        if (userWidth > 0) {
-            canvasWidth = userWidth;
-            canvasHeight = Math.round(userWidth / aspectRatio);
-            console.log("Using user width:", canvasWidth, canvasHeight);
-        } else if (userHeight > 0) {
-            canvasHeight = userHeight;
-            canvasWidth = Math.round(userHeight * aspectRatio);
-            console.log("Using user height:", canvasWidth, canvasHeight);
-        } else {
-            // Fallback to previous logic (2x scale + 1000px min)
-            console.log("Using default scaling...");
-            const qualityScale = 2;
-            const minDimension = 1000;
-            let targetWidth = svgWidth * qualityScale;
-            let targetHeight = svgHeight * qualityScale;
-
-            if (targetWidth < minDimension && targetHeight < minDimension) {
-                let scaleFactor;
-                if (svgWidth >= svgHeight) {
-                    scaleFactor = minDimension / targetWidth;
-                } else {
-                    scaleFactor = minDimension / targetHeight;
-                }
-                targetWidth *= scaleFactor;
-                targetHeight *= scaleFactor;
+        if (useCustomDimensions) {
+            console.log("Using custom dimensions for PNG save...");
+            const userWidth = parseInt(pngWidthInput.value, 10);
+            const userHeight = parseInt(pngHeightInput.value, 10);
+            if (userWidth > 0) {
+                canvasWidth = userWidth;
+                canvasHeight = Math.round(userWidth / aspectRatio);
+                console.log("Using user width:", canvasWidth, canvasHeight);
+            } else if (userHeight > 0) {
+                canvasHeight = userHeight;
+                canvasWidth = Math.round(userHeight * aspectRatio);
+                console.log("Using user height:", canvasWidth, canvasHeight);
+            } else {
+                alert("Please enter a width or height for custom PNG save.");
+                return; // Don't proceed if custom dimensions requested but none provided
             }
-            canvasWidth = Math.round(targetWidth);
-            canvasHeight = Math.round(targetHeight);
+        } else {
+             // Default save logic (e.g., use SVG dimensions or a fixed scale)
+            console.log("Using default dimensions for PNG save...");
+            // Example: Use intrinsic SVG size or a default like 1000px wide
+            canvasWidth = svgWidth; // Or set a fixed default canvasWidth = 1000;
+            canvasHeight = svgHeight; // Or calc based on fixed canvasHeight = Math.round(canvasWidth / aspectRatio);
+            
+            // --- OR use the previous scaling logic for default ---
+            // const qualityScale = 2;
+            // const minDimension = 1000;
+            // let targetWidth = svgWidth * qualityScale;
+            // let targetHeight = svgHeight * qualityScale;
+            // if (targetWidth < minDimension && targetHeight < minDimension) {
+            //     let scaleFactor = (svgWidth >= svgHeight) ? (minDimension / targetWidth) : (minDimension / targetHeight);
+            //     targetWidth *= scaleFactor;
+            //     targetHeight *= scaleFactor;
+            // }
+            // canvasWidth = Math.round(targetWidth);
+            // canvasHeight = Math.round(targetHeight);
+            // --- End scaling logic ---
         }
 
         // Ensure minimum dimensions if calculated
-        canvasWidth = Math.max(1, canvasWidth); 
-        canvasHeight = Math.max(1, canvasHeight);
+        canvasWidth = Math.max(1, canvasWidth || 300); // Ensure minimum size
+        canvasHeight = Math.max(1, canvasHeight || 150);
+        console.log("Final Canvas Dimensions:", canvasWidth, canvasHeight);
 
         // Create canvas
         const canvas = document.createElement('canvas');
@@ -1158,7 +1280,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const img = new Image();
 
         // Create Blob and Object URL
-        // IMPORTANT: Ensure SVG string has xmlns attribute for proper rendering in image/canvas
         let svgData = svgString;
         if (!svgData.includes('xmlns=')) {
             svgData = svgData.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"');
@@ -1167,26 +1288,21 @@ document.addEventListener('DOMContentLoaded', () => {
         const url = URL.createObjectURL(svgBlob);
 
         img.onload = () => {
-            // Draw image onto canvas scaled up
             ctx.drawImage(img, 0, 0, canvasWidth, canvasHeight);
-
-            // Convert canvas to PNG data URL
             try {
                 const pngUrl = canvas.toDataURL('image/png');
-
-                // Trigger download
                 const downloadLink = document.createElement('a');
                 downloadLink.href = pngUrl;
-                downloadLink.download = 'ai-generated-svg.png'; // Filename
+                // Differentiate filename based on save type
+                const baseFilename = promptInput.value.trim().substring(0, 30).replace(/[^a-z0-9]/gi, '_') || 'generated';
+                downloadLink.download = useCustomDimensions ? `${baseFilename}_custom.png` : `${baseFilename}.png`; 
                 document.body.appendChild(downloadLink);
                 downloadLink.click();
                 document.body.removeChild(downloadLink);
-
             } catch (e) {
                 console.error("Error converting canvas to PNG:", e);
                 alert("Failed to save SVG as PNG. The SVG might be too complex or contain unsupported features.");
             } finally {
-                // Clean up the object URL
                 URL.revokeObjectURL(url);
             }
         };
@@ -1194,15 +1310,34 @@ document.addEventListener('DOMContentLoaded', () => {
         img.onerror = (e) => {
             console.error("Error loading SVG into image element:", e);
             alert("Failed to load SVG for PNG conversion. Please check SVG code for errors.");
-            URL.revokeObjectURL(url); // Clean up on error too
+            URL.revokeObjectURL(url); 
         };
 
-        // Set image source
         img.src = url;
     }
 
-    if (savePngBtn) {
-        savePngBtn.addEventListener('click', handleSavePng);
+    // --- Function to check and update Save Custom PNG button state ---
+    function updateCustomPngButtonState() {
+        const widthVal = parseInt(pngWidthInput.value, 10) || 0;
+        const heightVal = parseInt(pngHeightInput.value, 10) || 0;
+        const svgPresent = svgCodeEditor.value && svgCodeEditor.value.trim().length > 0;
+
+        if (svgPresent && (widthVal > 0 || heightVal > 0)) {
+            saveCustomPngBtn.disabled = false;
+            saveCustomPngBtn.classList.add('primary-btn');
+            saveCustomPngBtn.classList.remove('secondary-btn');
+        } else {
+            saveCustomPngBtn.disabled = true;
+            saveCustomPngBtn.classList.remove('primary-btn');
+            saveCustomPngBtn.classList.add('secondary-btn');
+        }
+    }
+    
+    // Helper to reset custom png button
+    function resetCustomPngButtonState() {
+        saveCustomPngBtn.disabled = true;
+        saveCustomPngBtn.classList.remove('primary-btn');
+        saveCustomPngBtn.classList.add('secondary-btn');
     }
 
     // --- Initial Setup ---
@@ -1210,4 +1345,20 @@ document.addEventListener('DOMContentLoaded', () => {
     updateHistoryList();
     // Activate the default tab (Generator) on load
     switchTab('generator-tab-content');
+
+    // --- ADDED: Randomize Container Borders ---
+    function randomizeContainerBorders() {
+        const containers = document.querySelectorAll('.container');
+        const color1 = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim() || '#E69500';
+        const color2 = '#C774E8'; // Keep the second color fixed for now
+
+        containers.forEach(container => {
+            const randomAngle = Math.floor(Math.random() * 360);
+            const gradient = `linear-gradient(${randomAngle}deg, ${color1}, ${color2})`;
+            container.style.borderImageSource = gradient;
+            // console.log(`Applied gradient to container: ${gradient}`); // Optional debug log
+        });
+    }
+    randomizeContainerBorders(); // Call the function on load
+    // --- END Randomize Borders --- 
 }); 

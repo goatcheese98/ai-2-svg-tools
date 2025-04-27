@@ -16,6 +16,7 @@
     <nav class="tab-navigation">
         <button class="tab-button active" data-tab="generator-tab-content">AI SVG Generator</button>
         <button class="tab-button" data-tab="extractor-tab-content">Content Extractor</button>
+        <button class="tab-button" data-tab="how-to-use-tab-content">Help</button>
     </nav>
 
     <!-- Generator Tab Content -->
@@ -32,17 +33,19 @@
                         <label>Complexity:</label>
                         <div class="buttons" id="complexity-buttons">
                             <button class="control-button" data-value="1">Low</button>
-                            <button class="control-button active" data-value="3">Medium</button> <!-- Default active -->
+                            <button class="control-button active" data-value="3">Medium</button>
                             <button class="control-button" data-value="5">High</button>
                         </div>
+                        <span class="tooltip-icon" data-tooltip="Controls the level of detail in the SVG. Medium is the default.">?</span>
                     </div>
                     <div class="control-button-group">
                         <label>Color Usage:</label>
                         <div class="buttons" id="color-usage-buttons">
                             <button class="control-button" data-value="1">Low</button>
-                            <button class="control-button active" data-value="3">Medium</button> <!-- Default active -->
+                            <button class="control-button active" data-value="3">Medium</button>
                             <button class="control-button" data-value="5">High</button>
                         </div>
+                        <span class="tooltip-icon" data-tooltip="Influences color variety in the SVG. Medium is the default.">?</span>
                     </div>
                 </div>
 
@@ -56,8 +59,9 @@
                             <option value="gemini-2.0-flash-thinking-exp-01-21">Gemini 2.0 Flash Thinking Exp</option>
                             <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
                         </select>
+                        <span class="tooltip-icon" data-tooltip="Select the AI model for SVG generation. 'Flash' models are faster, 'Pro' may be more capable.">?</span>
                     </div>
-                    <button id="generate-btn">Generate SVG</button>
+                    <button id="generate-btn" class="primary-btn">Generate SVG</button>
                 </div>
 
                 <span class="loading-spinner" id="generate-spinner"></span>
@@ -74,10 +78,11 @@
                 <h2>1. Upload Image & Context</h2>
                 <!-- Wrap upload elements in a drop zone container -->
                 <div id="drop-zone" class="drop-zone">
-                    <p class="drop-zone-prompt">Drag & Drop</p>
+                    <p class="drop-zone-prompt">Drag & Drop Image Here</p>
+                    <p class="upload-limit-note">(Max file size: ~16MB, server configured)</p>
                     <div class="upload-area">
                         <!-- Keep existing label, hidden input, button, span -->
-                        <label for="image-upload">Upload Image:</label>
+                        <label for="image-upload">Or Upload Image:</label>
                         <input type="file" id="image-upload" accept="image/*">
                         <button type="button" onclick="document.getElementById('image-upload').click()" class="secondary-btn">Choose File</button>
                         <span id="file-name" class="file-name-display">No file chosen</span>
@@ -102,6 +107,7 @@
                             <option value="gemini-2.0-flash-thinking-exp-01-21">Gemini 2.0 Flash Thinking Exp</option>
                             <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
                         </select>
+                        <span class="tooltip-icon" data-tooltip="Select the AI model for image analysis. 'Flash' models are faster, 'Pro' may be more capable.">?</span>
                     </div>
                     <button id="analyze-btn" class="primary-btn">Analyze Image</button>
                     <span class="loading-spinner" id="analyze-spinner"></span>
@@ -123,6 +129,60 @@
         </div>
     </div>
 
+    <!-- How to Use Tab Content - Initially Hidden -->
+    <div id="how-to-use-tab-content" class="tab-content" style="display: none;">
+        <div class="container">
+            <h1>How to Use This App</h1>
+            
+            <section class="how-to-section">
+                <h2>App Overview</h2>
+                <p>This application leverages AI models to help you create, analyze, and refine Scalable Vector Graphics (SVG).</p>
+                <ul>
+                    <li><strong>AI SVG Generator Tab:</strong> Describe an image or concept, and the AI will attempt to generate corresponding SVG code. You can control complexity, color usage, and choose different AI models.</li>
+                    <li><strong>Content Extractor Tab:</strong> Upload an image (like a screenshot or diagram), and the AI will analyze it, providing descriptions, identifying elements, and even attempting to recreate it as an SVG.</li>
+                </ul>
+            </section>
+
+            <section class="how-to-section">
+                <h2>Using the AI SVG Generator</h2>
+                <ol>
+                    <li>Enter a clear description of the SVG you want in the text area (e.g., "a red heart with a black outline").</li>
+                    <li>Adjust the 'Complexity' and 'Color Usage' buttons to guide the AI (Medium is default). Hover over the '?' icons for details.</li>
+                    <li>Select an AI 'Model'. 'Flash' models are faster; 'Pro' models might offer higher quality.</li>
+                    <li>Click 'Generate SVG'.</li>
+                    <li>Review the generated SVG code in the editor and the visual preview.</li>
+                    <li>Use the 'Refine SVG' section below the preview to provide further instructions (e.g., "make the circle blue", "add a yellow star").</li>
+                    <li>Save the SVG code or save it as a standard or custom-sized PNG.</li>
+                    <li>Previous generations are saved in the 'Generation History' for the current session.</li>
+                </ol>
+            </section>
+
+            <section class="how-to-section">
+                <h2>Using the Content Extractor</h2>
+                <ol>
+                    <li>Drag & drop an image file onto the designated area, or use the 'Choose File' button. Common formats like PNG, JPG, GIF are supported (check size limits).</li>
+                    <li>Optionally, provide 'Context' to guide the analysis (e.g., "focus on the logo", "extract the text content").</li>
+                    <li>Select an AI 'Model' for analysis.</li>
+                    <li>Click 'Analyze Image'.</li>
+                    <li>Review the analysis results that appear below (Metadata, Semantic, Layout, etc.). You can edit these before proceeding.</li>
+                    <li>Click 'Recreate in SVG' to have the AI attempt to convert the analyzed image into SVG code based on the analysis.</li>
+                    <li>The generated SVG will appear in the editor/preview area on the Generator tab (you might need to switch back).</li>
+                    <li>You can also 'Copy as Markdown' to get the analysis text formatted for easy use elsewhere.</li>
+                </ol>
+            </section>
+
+            <section class="how-to-section">
+                <h2>General Tips</h2>
+                <ul>
+                    <li><strong>Be Specific:</strong> Clearer prompts generally lead to better results.</li>
+                    <li><strong>Iterate:</strong> Use the 'Refine SVG' feature or adjust your prompt and regenerate. AI generation isn't always perfect on the first try.</li>
+                    <li><strong>Experiment:</strong> Try different models, complexity levels, and prompts to see what works best for your needs.</li>
+                    <li><strong>Backgrounds:</strong> Use the background controls below the preview to check how your SVG looks on different backgrounds.</li>
+                </ul>
+            </section>
+        </div>
+    </div>
+
     <!-- Shared Output Area -->
     <div class="container output-container">
         <div class="main-content">
@@ -130,32 +190,40 @@
                 <h2>SVG Code</h2>
                 <textarea id="svg-code-editor" spellcheck="false" placeholder="Generated SVG code will appear here..."></textarea>
                 <div class="output-controls">
-                    <button id="copy-btn" class="secondary-btn">Copy Code</button>
-                    <button id="save-btn" class="secondary-btn">Save SVG</button>
-                    <button id="save-png-btn" class="secondary-btn">Save PNG</button>
+                    <button id="save-btn" class="secondary-btn" disabled>Save SVG</button>
+                    <button id="save-png-btn" class="secondary-btn" disabled>Save PNG</button>
+                    <button id="copy-btn" class="secondary-btn" disabled>Copy Code</button>
+                    
                     <!-- PNG Dimension Inputs -->
-                    <div class="png-dimensions">
-                        <label for="png-width-input">Width (px):</label>
-                        <input type="number" id="png-width-input" min="10" placeholder="(auto)">
-                        <label for="png-height-input">Height (px):</label>
-                        <input type="number" id="png-height-input" min="10" placeholder="(auto)">
-                        <span class="dimension-note">(Set one for custom size)</span>
+                    <div class="png-dimensions-container">
+                        <h4>Custom PNG Save <span class="tooltip-icon" data-tooltip="Set custom Width or Height (pixels) for the PNG. The other dimension auto-scales to maintain aspect ratio.">?</span></h4>
+                        <div class="png-dimensions">
+                            <label for="png-width-input">Width (px):</label>
+                            <input type="number" id="png-width-input" min="10" placeholder="(auto-scales)">
+                            <label for="png-height-input">Height (px):</label>
+                            <input type="number" id="png-height-input" min="10" placeholder="(auto-scales)">
+                        </div>
+                        <button id="save-custom-png-btn" class="secondary-btn" disabled>Save Custom PNG</button>
                     </div>
                 </div>
             </div>
             <div class="preview-section">
                 <h2>Live Preview</h2>
-                <!-- Add Background Controls -->
+                <!-- SVG will be rendered here -->
+                <div id="svg-preview" class="preview-box">
+                </div>
+                <!-- Add Background Controls BELOW the preview box -->
                 <div class="preview-background-controls">
                     <label>Background:</label>
                     <button data-bg="transparent" class="bg-control-btn active">Transparent</button>
                     <button data-bg="white" class="bg-control-btn">White</button>
                     <button data-bg="black" class="bg-control-btn">Black</button>
+                    <!-- Custom Color Elements -->
+                    <button data-bg="custom" class="bg-control-btn" id="bg-custom-btn">Custom</button>
+                    <input type="color" id="bg-custom-color-picker" value="#ffffff" class="color-picker-input" style="display: none;">
+                    <span id="bg-custom-hex" class="color-picker-hex" style="display: none;">#ffffff</span>
                 </div>
                 <!-- End Background Controls -->
-                <div id="svg-preview" class="preview-box">
-                    <!-- SVG will be rendered here -->
-                </div>
             </div>
         </div>
 
@@ -175,8 +243,9 @@
                         <option value="gemini-2.0-flash-thinking-exp-01-21">Gemini 2.0 Flash Thinking Exp</option>
                         <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
                     </select>
+                    <span class="tooltip-icon" data-tooltip="Select the AI model for refining the SVG. 'Flash' models are faster, 'Pro' may be more capable.">?</span>
                 </div>
-                <button id="refine-btn" class="primary-btn">Refine</button>
+                <button id="refine-btn" class="primary-btn">Refine SVG</button>
                 <span class="loading-spinner" id="refine-spinner"></span>
                 <p id="refine-status" class="status"></p>
             </div>
@@ -188,7 +257,7 @@
     <!-- Standalone History Container -->
     <div class="container history-container">
          <div id="history-section">
-            <h3>Generation History (Current Session)</h3>
+            <h3>Generation History (Current Session) <span class="tooltip-icon" data-tooltip="Shows previous generations from this session. Click an item to reload its prompt and settings.">?</span></h3>
             <ul id="history-list"></ul>
             <button id="clear-history-btn" class="secondary-btn">Clear History</button>
         </div>

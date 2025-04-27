@@ -419,9 +419,10 @@ button:disabled {
 /* Preview Background Controls Styling */
 .preview-background-controls {
     display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 10px; /* Space before preview box */
+    align-items: center; /* Ensure vertical centering */
+    flex-wrap: wrap; /* Allow items to wrap */
+    gap: 8px; /* Slightly reduce gap */
+    margin-bottom: 15px; /* Increase space below */
 }
 
 .preview-background-controls label {
@@ -452,6 +453,49 @@ button:disabled {
     border-color: var(--primary-color);
     font-weight: 500;
 }
+
+/* Custom Color Picker Styles */
+.color-picker-input {
+    width: 28px; /* Adjust size as needed */
+    height: 28px;
+    padding: 0; /* Remove default padding */
+    border: 1px solid var(--border-color);
+    border-radius: 4px; /* Slightly rounded */
+    cursor: pointer;
+    margin-left: 5px; /* Space after Custom button */
+    background-color: transparent; /* Make background transparent */
+}
+
+/* Remove default browser styling for color input */
+.color-picker-input::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+.color-picker-input::-webkit-color-swatch {
+    border: none;
+    border-radius: 3px; /* Inner swatch radius */
+}
+.color-picker-input::-moz-color-swatch {
+    border: none;
+    border-radius: 3px;
+}
+
+.color-picker-hex {
+    font-size: 0.8rem;
+    color: var(--text-light);
+    margin-left: 5px;
+    font-family: monospace;
+    background-color: var(--input-background); /* Match input bg */
+    padding: 3px 6px;
+    border-radius: 3px;
+}
+
+/* Show picker/hex when custom button is active */
+/* REMOVE THIS RULE
+#bg-custom-btn.active + .color-picker-input,
+#bg-custom-btn.active + .color-picker-input + .color-picker-hex {
+    display: inline-block; 
+}
+*/
 
 /* History Section */
 .history-container {
@@ -597,81 +641,67 @@ h3 {
 /* .slider-value { ... } */
 
 /* Generate Controls (Button + Model Selector) */
-.generate-controls {
+.generate-controls,
+.extractor-actions,
+.refinement-actions {
     display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    gap: 20px;
+    flex-direction: column; /* Stack vertically */
+    align-items: flex-start; /* Align items left */
+    gap: 15px; /* Space between selector and button */
     margin-top: 25px;
-    flex-wrap: wrap;
+    /* flex-wrap: wrap; No longer needed */
 }
 
+/* Remove order overrides */
+/*
 #generate-btn {
     order: 2;
 }
-
 .model-selector {
-    display: flex;
-    align-items: center;
-    gap: 8px;
     order: 1;
 }
-
-.model-selector label {
-    font-size: 0.9rem;
-    color: var(--text-light);
-    white-space: nowrap;
+.extractor-actions #analyze-btn {
+    order: 2;
 }
-
-.model-selector select {
-    padding: 10px 20px;
-    border-radius: var(--border-radius);
-    background-color: var(--input-background);
-    color: var(--text-light);
-    border: 1px solid var(--border-color);
-    font-size: 1rem;
-    font-weight: 500;
-    cursor: pointer;
-    min-width: 200px;
-    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
-    appearance: none;
-    -webkit-appearance: none;
-    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="%239ca3af" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/></svg>');
-    background-repeat: no-repeat;
-    background-position: right 12px center;
-    background-size: 12px 12px;
+.extractor-model-selector {
+    order: 1;
 }
-
-.model-selector select:hover {
-    background-color: var(--border-color);
-    border-color: var(--secondary-color);
-    color: var(--text-color);
+.refinement-actions #refine-status {
+    order: 3; 
 }
-
-.model-selector select:focus {
-    outline: none;
-    border-color: var(--input-focus-border);
-    box-shadow: 0 0 0 2px var(--input-focus-shadow);
+.extractor-actions #analysis-status {
+    order: 3;
 }
+*/
 
-.slider-group {
-    display: flex;
+/* Ensure model selectors take appropriate width */
+.generate-controls .model-selector,
+.extractor-actions .extractor-model-selector,
+.refinement-actions .refine-model-selector {
+    display: flex; /* Keep inner elements aligned */
     align-items: center;
-    gap: 15px;
+    gap: 8px;
+    width: 100%; /* Make selector container take full width */
+    max-width: 400px; /* Limit max width */
+    align-self: flex-start; /* Explicitly align self left */
 }
 
-.slider-group label {
-    flex-shrink: 0;
-    font-size: 0.95rem;
-    color: var(--text-light);
-    width: 180px;
+/* Ensure buttons have some top margin if needed, but gap handles it */
+.generate-controls #generate-btn,
+.extractor-actions #analyze-btn,
+.refinement-actions #refine-btn {
+    margin-top: 0; /* Reset margin if any */
+    align-self: flex-start; /* Explicitly align self left */
 }
 
-.slider-group input[type="range"] {
-    flex-grow: 1;
-}
-
-.slider-value {
+/* Ensure status messages align */
+.generate-controls #status-message, /* Need to select this specifically */
+.extractor-actions #analysis-status,
+.refinement-actions #refine-status {
+    width: 100%;
+    text-align: left;
+    margin-left: 0;
+    margin-top: 5px; /* Small space above status */
 }
 
 /* Tab Navigation */
@@ -695,6 +725,13 @@ h3 {
     transition: color 0.2s ease, border-bottom-color 0.2s ease;
     margin-bottom: -1px; /* Overlap bottom border */
     box-shadow: none;
+}
+
+/* Make "How to Use" tab button slightly smaller */
+.tab-button[data-tab="how-to-use-tab-content"] {
+    font-size: 0.95rem; /* Further reduced from 1.0rem */
+    /* Optionally reduce weight when inactive */
+    /* font-weight: 400; */ 
 }
 
 .tab-button:hover {
@@ -801,9 +838,17 @@ h3 {
 }
 
 .drop-zone-prompt {
-    margin: 0 0 15px 0;
+    margin: 0 0 10px 0; /* Reduced bottom margin */
     color: var(--text-light);
     font-weight: 500;
+}
+
+/* Style for the upload limit note */
+.upload-limit-note {
+    font-size: 0.8rem;
+    color: var(--secondary-color); /* Use lighter grey */
+    margin: -5px 0 15px 0; /* Adjust margins */
+    font-style: italic;
 }
 
 .drop-zone.dragover {
@@ -938,7 +983,11 @@ h3 {
 /* Target the selector within this group */
 .refinement-actions .refine-model-selector {
     flex-shrink: 0; 
-    width: 250px; 
+}
+
+/* Widen the select element itself */
+.refinement-actions .refine-model-selector select {
+    min-width: 300px; /* Increased width */
 }
 
 /* Target the button within this group */
@@ -1128,11 +1177,51 @@ button:disabled {
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-left: auto; /* Push to the right */
     padding: 5px 10px;
     border: 1px solid var(--border-color);
-    border-radius: var(--border-radius-small);
+    border-radius: var(--border-radius);
     background-color: var(--input-background);
+}
+
+/* Wrapper for title and input group */
+.png-dimensions-container {
+    display: flex;
+    flex-direction: column; /* Back to column */
+    align-items: flex-start; /* Align items left */
+    gap: 10px; /* Adjust gap */
+}
+
+/* REMOVE complex alignment for tooltip */
+/*
+.png-dimensions-container > .tooltip-icon {
+    align-self: flex-end; 
+    margin-top: -1.2em; 
+    margin-right: -5px; 
+}
+*/
+
+.png-dimensions-container h4 {
+    margin: 0; 
+    font-size: 0.9rem;
+    color: var(--text-light);
+    font-weight: 500;
+    /* Remove inline-flex, let it be block */
+    /* display: inline-flex; */ 
+    /* align-items: center; */
+}
+
+/* Tooltip icon within h4 needs slight adjustment */
+.png-dimensions-container h4 .tooltip-icon {
+    margin-left: 5px; 
+    vertical-align: middle; /* Use middle alignment */
+}
+
+/* Style the new button */
+#save-custom-png-btn {
+    align-self: flex-start; /* Align button left */
+    margin-top: 5px; /* Add some space above button */
+    padding: 8px 15px; /* Slightly smaller padding */
+    font-size: 0.9rem;
 }
 
 .png-dimensions label {
@@ -1198,4 +1287,144 @@ button:disabled {
 
 .loading-spinner.visible {
     display: inline-block; /* Show when visible class is added */
+}
+
+/* --- Tooltip Styles --- */
+.tooltip-icon {
+    display: inline-block;
+    margin-left: 8px; 
+    font-size: 0.8em; 
+    color: var(--primary-color); /* Use accent color for text */
+    background-color: var(--card-background); /* Use card background */
+    border: 1px solid var(--primary-color); /* Add border */
+    border-radius: 50%;
+    width: 1.4em; 
+    height: 1.4em;
+    line-height: 1.3em; /* Adjust line-height slightly for border */
+    text-align: center;
+    font-weight: bold;
+    cursor: help;
+    position: relative; 
+    vertical-align: middle; 
+}
+
+/* Tooltip bubble - position to the right */
+.tooltip-icon::after {
+    content: attr(data-tooltip); 
+    position: absolute;
+    /* Position to the right */
+    top: 50%; 
+    left: 130%; /* Adjust distance from icon */
+    transform: translateY(-50%); /* Center vertically */
+    
+    background-color: var(--card-background); 
+    color: var(--text-light);
+    padding: 8px 12px;
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+    font-size: 0.85rem; 
+    line-height: 1.4; 
+    max-width: 280px; /* ADD max-width */
+    width: max-content; /* Allow shrinking */
+    z-index: 10; 
+    
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+    text-align: left; /* Ensure wrapped text is left-aligned */
+}
+
+/* Show on hover */
+.tooltip-icon:hover::after {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Media Query for smaller screens (e.g., mobile) */
+@media (max-width: 600px) {
+    .tooltip-icon::after {
+        /* Reposition below the icon */
+        top: 140%; /* Adjust vertical distance below icon */
+        left: 50%; 
+        transform: translateX(-50%); /* Center horizontally relative to icon */
+
+        /* Adjust width for smaller screens */
+        max-width: calc(100vw - 40px); /* Example: Full viewport width minus some padding */
+        width: auto; /* Let it take needed width up to max-width */
+    }
+}
+/* --- End Tooltip Styles --- */ 
+
+/* Polished Dropdown Styles for all model selectors */
+.model-selector select {
+    padding: 10px 35px 10px 15px; /* Adjust padding (more right for arrow) */
+    border-radius: var(--border-radius);
+    background-color: var(--input-background);
+    color: var(--text-light);
+    border: 1px solid var(--border-color);
+    font-size: 0.95rem; /* Slightly smaller font */
+    font-weight: 500;
+    cursor: pointer;
+    min-width: 250px; /* Adjust as needed */
+    transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    appearance: none;
+    -webkit-appearance: none;
+    /* Updated SVG arrow using text-light color */
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="%23E3E3E3" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 12px 12px;
+}
+
+.model-selector select:hover {
+    background-color: var(--border-color); /* Use border color */
+    border-color: var(--secondary-color);
+    color: var(--text-color);
+}
+
+.model-selector select:focus {
+    outline: none;
+    border-color: var(--input-focus-border);
+    box-shadow: 0 0 0 2px var(--input-focus-shadow);
+    background-color: var(--input-background); /* Keep background on focus */
+}
+
+/* How to Use Tab Specific Styles */
+#how-to-use-tab-content .container {
+    /* Add specific container padding if needed, or inherit */
+}
+
+.how-to-section {
+    margin-bottom: 30px; /* Space between sections */
+}
+
+.how-to-section h2 {
+    /* Inherits general h2 style, maybe adjust margin */
+    margin-bottom: 15px;
+}
+
+.how-to-section p,
+.how-to-section ul,
+.how-to-section ol {
+    margin-bottom: 15px; /* Space below text blocks */
+    line-height: 1.7; /* Slightly more line spacing for readability */
+}
+
+.how-to-section ul,
+.how-to-section ol {
+    padding-left: 25px; /* Indent lists */
+}
+
+.how-to-section li {
+    margin-bottom: 8px; /* Space between list items */
+}
+
+.how-to-section strong {
+    color: var(--primary-color); /* Highlight key terms */
+}
+
+/* Reduce font size for general text within How to Use tab */
+#how-to-use-tab-content p,
+#how-to-use-tab-content li {
+    font-size: 0.9rem; /* Further reduced from 0.95rem */
 } 
