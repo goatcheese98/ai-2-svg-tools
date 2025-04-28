@@ -237,12 +237,10 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // --- UPDATE: Get values from buttons --- 
         const complexity = getSelectedButtonValue(complexityButtons);
         const colorUsage = getSelectedButtonValue(colorUsageButtons);
-        const selectedModel = modelSelect.value; // Get selected model
+        const selectedModel = modelSelect.value;
 
-        // Update UI: Start Loading
         _update_generation_ui(true, 'Generating SVG...');
         svgCodeEditor.value = '';
         updatePreview('');
@@ -250,34 +248,53 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const response = await fetch('/generate', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', },
-                body: JSON.stringify({ prompt: currentPrompt, complexity: complexity, colorUsage: colorUsage, model: selectedModel })
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    prompt: currentPrompt,
+                    complexity: complexity,
+                    colorUsage: colorUsage,
+                    model: selectedModel
+                }),
             });
+
+            if (!response.ok) {
+                let errorMsg = `Generation failed (status ${response.status})`;
+                try {
+                    const contentType = response.headers.get('content-type');
+                    if (contentType && contentType.includes('application/json')) {
+                        const errorData = await response.json();
+                        errorMsg = `Generation failed: ${errorData.error || JSON.stringify(errorData)}`;
+                    } else {
+                        const errorText = await response.text();
+                        console.error("Non-JSON error response from /generate:", errorText);
+                        errorMsg = `Generation failed: Server returned an unexpected response (status ${response.status}). Check console for details.`;
+                    }
+                } catch (parseError) {
+                    console.error("Error processing the error response from /generate:", parseError);
+                    errorMsg = `Generation failed: Could not process error response (status ${response.status}).`;
+                }
+                throw new Error(errorMsg); // Throw specific error
+            }
+
+            // If response.ok, it should be JSON
             const data = await response.json();
 
-            if (response.ok) {
-                const generatedSvgCode = data.svg_code;
-                svgCodeEditor.value = generatedSvgCode;
-                updatePreview(generatedSvgCode);
-
-                // Update UI: Success
+            if (data.svg_code) {
+                svgCodeEditor.value = data.svg_code;
+                updatePreview(data.svg_code);
                 _update_generation_ui(false, 'SVG generated successfully!');
-
-                // --- UPDATE: Pass button values to history --- 
-                saveHistoryItem(currentPrompt, complexity, colorUsage, selectedModel, generatedSvgCode);
-                updateHistoryList();
-
+                saveHistoryItem(currentPrompt, complexity, colorUsage, selectedModel, data.svg_code);
             } else {
-                 // Let the catch block handle the UI update for errors
-                throw new Error(data.error || 'Unknown error occurred');
+                // Handle defensively
+                _update_generation_ui(false, 'Generation completed, but no SVG code received.', true);
             }
+
         } catch (error) {
-            console.error('Generation Error:', error);
-            // Update UI: Error
-            _update_generation_ui(false, `Error: ${error.message}`, true);
+            console.error('Generation failed:', error);
+            _update_generation_ui(false, error.message || 'An unexpected error occurred during generation.', true);
             updatePreview(''); // Clear preview on error
-        } finally {
-             // Button re-enabling is handled by _update_generation_ui(false, ...)
         }
     }
 
@@ -759,6 +776,25 @@ document.addEventListener('DOMContentLoaded', () => {
                     })
                 });
 
+                if (!response.ok) {
+                    let errorMsg = `Analysis failed (status ${response.status})`;
+                    try {
+                        const contentType = response.headers.get('content-type');
+                        if (contentType && contentType.includes('application/json')) {
+                            const errorData = await response.json();
+                            errorMsg = `Analysis failed: ${errorData.error || JSON.stringify(errorData)}`;
+                        } else {
+                            const errorText = await response.text();
+                            console.error("Non-JSON error response from /analyze_image:", errorText);
+                            errorMsg = `Analysis failed: Server returned an unexpected response (status ${response.status}). Check console for details.`;
+                        }
+                    } catch (parseError) {
+                        console.error("Error processing the error response from /analyze_image:", parseError);
+                        errorMsg = `Analysis failed: Could not process error response (status ${response.status}).`;
+                    }
+                    throw new Error(errorMsg);
+                }
+
                 const data = await response.json();
                 console.log("--- Data Received by Frontend ---"); // Keep logs for now
                 console.log(data);
@@ -824,34 +860,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Recreate SVG Button Listener (Renamed) ---
     async function handleRecreateSvg() {
-        // Find the elements (using updated IDs)
-        const recreateButton = document.getElementById('recreate-svg-btn');
-        const recreateStatusDisplay = document.getElementById('recreate-svg-status');
-
         if (!currentImageDataUrl) {
-            if (recreateStatusDisplay) recreateStatusDisplay.textContent = 'Missing image data.';
+            if (recreateStatusDisplay) recreateStatusDisplay.textContent = 'No image selected for recreation.';
             return;
         }
 
-        // Gather analysis data from textareas (Update order)
-        const analysisData = {};
-        const analysisTypes = ['metadata', 'semantic', 'layout', 'content_styling', 'ocr'];
-        let analysisComplete = true;
-        analysisTypes.forEach(type => {
-            const textarea = document.getElementById(`analysis-${type}`);
-            if (textarea && textarea.value.trim() !== '') {
-                analysisData[type] = textarea.value.trim();
-            } else {
-                analysisComplete = false; 
-            }
-        });
-
-        if (!analysisComplete) {
-             if (recreateStatusDisplay) recreateStatusDisplay.textContent = 'Error gathering analysis data.';
+        const analysisData = getAnalysisDataFromTextareas(); 
+        if (!analysisData) {
+             if (recreateStatusDisplay) recreateStatusDisplay.textContent = 'Analysis data is missing or incomplete.';
               return;
         }
-
-        const selectedModel = extractorModelSelect.value; // Use EXTRACTOR dropdown value
+        
+        const selectedModel = extractorModelSelect.value; 
 
         if (recreateButton) recreateButton.disabled = true;
         if (recreateStatusDisplay) {
@@ -864,20 +884,39 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const response = await fetch('/convert_to_svg', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', },
+                headers: {
+                    'Content-Type': 'application/json',
+                },
                 body: JSON.stringify({
-                    image_data: currentImageDataUrl, 
+                    image_data: currentImageDataUrl,
                     analysis_data: analysisData,
-                    model: selectedModel // Send extractor's selected model
-                })
+                    model: selectedModel
+                }),
             });
 
-            // --- IMPROVED ERROR CHECKING ---
-            const contentType = response.headers.get("content-type");
-            if (response.ok && contentType && contentType.includes("application/json")) {
-                // It's likely JSON, proceed to parse
-                const data = await response.json(); 
-                // Process success (this part remains the same)
+            if (!response.ok) {
+                let errorMsg = `SVG recreation failed (status ${response.status})`;
+                try {
+                    const contentType = response.headers.get('content-type');
+                    if (contentType && contentType.includes('application/json')) {
+                        const errorData = await response.json();
+                        errorMsg = `SVG recreation failed: ${errorData.error || JSON.stringify(errorData)}`;
+                    } else {
+                        const errorText = await response.text();
+                        console.error("Non-JSON error response from /convert_to_svg:", errorText);
+                        errorMsg = `SVG recreation failed: Server returned an unexpected response (status ${response.status}). Check console for details.`;
+                    }
+                } catch (parseError) {
+                    console.error("Error processing the error response from /convert_to_svg:", parseError);
+                    errorMsg = `SVG recreation failed: Could not process error response (status ${response.status}).`;
+                }
+                throw new Error(errorMsg);
+            }
+
+            const data = await response.json();
+
+            if (response.ok) {
+                // ... (Success handling: update editor/preview, clear prompt, show success) ...
                 const generatedSvgCode = data.svg_code;
                 svgCodeEditor.value = generatedSvgCode;
                 updatePreview(generatedSvgCode);
@@ -891,27 +930,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 // updateHistoryList();
 
             } else {
-                // It's not JSON or not status OK, likely an HTML error page
-                const errorText = await response.text(); // Read the response as text
-                console.error("Server returned non-JSON response:", errorText); 
-                let errorMessage = `Server returned status ${response.status}.`;
-                // Attempt to extract a title or header from the HTML for a hint
-                const titleMatch = errorText.match(/<title>(.*?)<\/title>/i);
-                const h1Match = errorText.match(/<h1>(.*?)<\/h1>/i);
-                if (titleMatch && titleMatch[1]) {
-                    errorMessage += ` Error: ${titleMatch[1]}`;
-                } else if (h1Match && h1Match[1]) {
-                     errorMessage += ` Error: ${h1Match[1]}`;
-                } else {
-                    errorMessage += " Check console for full server response.";
-                }
-                 // Throw an error to be caught by the catch block
-                throw new Error(errorMessage);
+                throw new Error(data.error || 'Unknown recreation error');
             }
-            // --- END IMPROVED ERROR CHECKING ---
 
         } catch (error) {
-            // This catch block now handles JSON parsing errors AND the thrown error from non-JSON responses
             console.error("Recreation Error:", error);
              if (recreateStatusDisplay) {
                  // Display the potentially more informative error message
@@ -999,22 +1021,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Update Refine SVG Button Listener ---
     async function handleRefineSvg() {
-        const currentSvgCode = svgCodeEditor.value.trim();
-        const refinementInstructions = refinementPromptInput.value.trim();
-        const selectedModel = refineModelSelect.value; // Use REFINE dropdown value
+        const refinementPrompt = refinementPromptInput.value.trim();
+        const currentSvg = svgCodeEditor.value.trim();
+        const selectedModel = refineModelSelect.value; 
 
-        // --- Validation --- 
-        if (!currentSvgCode) {
-            refineStatus.textContent = 'No SVG code in the editor to refine.';
+        if (!refinementPrompt) {
+            refineStatus.textContent = 'Please enter refinement instructions.';
             refineStatus.className = 'status error';
             refineStatus.style.color = 'red';
             return;
         }
-        // Refinement instructions are now optional for self-critique
-        // if (!refinementInstructions) { ... }
+        if (!currentSvg) {
+            refineStatus.textContent = 'No SVG code to refine.';
+            refineStatus.className = 'status error';
+            refineStatus.style.color = 'red';
+            return;
+        }
 
         refineBtn.disabled = true;
-        refineStatus.textContent = 'Generating preview PNG...'; // New status
+        refineStatus.textContent = 'Refining SVG...';
         refineStatus.className = 'status info';
         refineStatus.style.color = '';
         refineSpinner.classList.add('visible'); // Show spinner initially for PNG gen
@@ -1031,12 +1056,31 @@ document.addEventListener('DOMContentLoaded', () => {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', },
                 body: JSON.stringify({
-                    svg_code: currentSvgCode,
-                    refinement_prompt: refinementInstructions, // Can be empty
+                    original_svg: currentSvg,
+                    refinement_prompt: refinementPrompt,
                     model: selectedModel,
                     png_data: pngDataUrl // Include the generated PNG data URL
                 })
             });
+
+            if (!response.ok) {
+                let errorMsg = `Refinement failed (status ${response.status})`;
+                try {
+                    const contentType = response.headers.get('content-type');
+                    if (contentType && contentType.includes('application/json')) {
+                        const errorData = await response.json();
+                        errorMsg = `Refinement failed: ${errorData.error || JSON.stringify(errorData)}`;
+                    } else {
+                        const errorText = await response.text();
+                        console.error("Non-JSON error response from /refine_svg:", errorText);
+                        errorMsg = `Refinement failed: Server returned an unexpected response (status ${response.status}). Check console for details.`;
+                    }
+                } catch (parseError) {
+                    console.error("Error processing the error response from /refine_svg:", parseError);
+                    errorMsg = `Refinement failed: Could not process error response (status ${response.status}).`;
+                }
+                throw new Error(errorMsg);
+            }
 
             const data = await response.json();
 
@@ -1057,7 +1101,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // FIX: Convert NodeList to Array before using .find()
                 const activeColorUsageButton = Array.from(colorUsageButtons).find(btn => btn.classList.contains('active'));
                 const colorUsage = activeColorUsageButton ? parseInt(activeColorUsageButton.dataset.value, 10) : 3; // Default 3 if not found
-                saveHistoryItem(currentPrompt + ` (Refined${refinementInstructions ? ': ' + refinementInstructions.substring(0,20) + '...': ' - Auto'})`, complexity, colorUsage, selectedModel, refinedSvgCode);
+                saveHistoryItem(currentPrompt + ` (Refined${refinementPrompt ? ': ' + refinementPrompt.substring(0,20) + '...': ' - Auto'})`, complexity, colorUsage, selectedModel, refinedSvgCode);
                 updateHistoryList();
             } else {
                 throw new Error(data.error || 'Unknown refinement error');
