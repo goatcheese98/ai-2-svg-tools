@@ -199,23 +199,12 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Basic validation attempt (browser will do the heavy lifting)
-        if (!svgCode.includes('<svg') || !svgCode.includes('</svg>')) {
-             svgPreview.innerHTML = '<p style="color: red;">Invalid or incomplete SVG code.</p>';
-             return;
-        }
-
-        // Use DOMParser to potentially catch some parsing errors and handle potentially unsafe content
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(svgCode, "image/svg+xml");
-        const svgElement = doc.querySelector('svg');
-
-        if (doc.querySelector('parsererror') || !svgElement) {
-             svgPreview.innerHTML = '<p style="color: red;">Error parsing SVG code.</p>';
-        } else {
-            // Append the parsed and potentially sanitized SVG element
-            // This is generally safer than setting innerHTML directly with arbitrary SVG
+        const svgElement = SvgSafety.sanitizeSvg(svgCode);
+        if (svgElement) {
             svgPreview.appendChild(svgElement);
+        } else {
+            svgPreview.textContent = 'Invalid or incomplete SVG code.';
+            [copyBtn, saveBtn, savePngBtn, saveCustomPngBtn].forEach(btn => btn.disabled = true);
         }
     }
 
@@ -300,8 +289,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Function to handle saving SVG
     function handleSave() {
-        const svgCode = svgCodeEditor.value;
-        if (!svgCode.trim()) {
+        const svgCode = SvgSafety.serializeSvg(svgCodeEditor.value);
+        if (!svgCode) {
             alert('Nothing to save. Generate or enter SVG code first.');
             return;
         }
@@ -321,8 +310,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Function to handle copying SVG code
     function handleCopy() {
-        const svgCode = svgCodeEditor.value;
-        if (!svgCode.trim()) {
+        const svgCode = SvgSafety.serializeSvg(svgCodeEditor.value);
+        if (!svgCode) {
             // Optionally provide feedback if there's nothing to copy
             // alert('Nothing to copy.');
             return;
@@ -958,7 +947,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function generatePngFromSvgPreview(minDimension = 1000) {
         return new Promise((resolve, reject) => {
             const svgPreviewDiv = document.getElementById('svg-preview');
-            const svgElement = svgPreviewDiv.querySelector('svg');
+            const svgElement = SvgSafety.sanitizeSvg(svgCodeEditor.value);
 
             if (!svgElement) {
                 return reject(new Error('No SVG in preview to generate PNG.'));
@@ -1187,7 +1176,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Function to update PNG dimension inputs based on aspect ratio
     function updatePngDimensions(changedInput) {
-        const svgElement = svgPreview.querySelector('svg');
+        const svgElement = SvgSafety.sanitizeSvg(svgCodeEditor.value);
         if (!svgElement) {
             console.warn("updatePngDimensions: No SVG found in preview.");
             return; // No SVG, can't calculate
@@ -1249,7 +1238,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Update Save PNG Functionality ---
     async function handleSavePng(event, useCustomDimensions = false) {
         const svgPreviewDiv = document.getElementById('svg-preview');
-        const svgElement = svgPreviewDiv.querySelector('svg');
+        const svgElement = SvgSafety.sanitizeSvg(svgCodeEditor.value);
 
         if (!svgElement) {
             alert('No SVG in preview to save as PNG.');
@@ -1364,7 +1353,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateCustomPngButtonState() {
         const widthVal = parseInt(pngWidthInput.value, 10) || 0;
         const heightVal = parseInt(pngHeightInput.value, 10) || 0;
-        const svgPresent = svgCodeEditor.value && svgCodeEditor.value.trim().length > 0;
+        const svgPresent = !!SvgSafety.sanitizeSvg(svgCodeEditor.value);
 
         if (svgPresent && (widthVal > 0 || heightVal > 0)) {
             saveCustomPngBtn.disabled = false;

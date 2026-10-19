@@ -1,0 +1,16 @@
+{
+  "private": true,
+  "scripts": {
+    "build": "esbuild browser/svg-safety.ts --bundle --format=iife --global-name=SvgSafety --outfile=static/svg-safety.js",
+    "typecheck": "tsc --noEmit --strict --lib DOM,ES2022 --moduleResolution bundler --module ESNext browser/svg-safety.ts",
+    "test": "node tests/svg-security.cjs"
+  },
+  "dependencies": {
+    "dompurify": "3.4.17"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "playwright": "1.64.1",
+    "typescript": "7.0.2"
+  }
+}
