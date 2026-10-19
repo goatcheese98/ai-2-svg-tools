@@ -47,3 +47,5 @@ The generated static/svg-safety.js is committed so existing Flask/Vercel serving
 - Existing recreation handler references undefined recreateButton/recreateStatusDisplay/getAnalysisDataFromTextareas. It already fails before reaching its request; restore that handler with a mocked end-to-end regression as a separate follow-up. Its successful-response preview path is protected, but recreation is not claimed functional here.
 - Deprecated google.generativeai SDK/model compatibility is outside this slice; no live provider compatibility verified. Existing refinement payload naming is unchanged.
 - Defense in depth such as CSP and server-side sanitization for any future server rendering/sharing remains separate work. The current application renders/exports through the browser boundary.
+
+Separate production configuration commit: direct `python app.py` startup now explicitly uses debug=False, preserving its host/port. Verified by runpy with Flask.run mocked and asserting debug is False (no server or provider call). WSGI configuration remains unchanged.
