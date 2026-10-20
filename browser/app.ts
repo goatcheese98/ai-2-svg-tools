@@ -107,6 +107,21 @@ document.addEventListener('DOMContentLoaded', () => {
     let debounceTimer: ReturnType<typeof setTimeout> | undefined;
     const MAX_HISTORY_ITEMS = 15; // Limit the number of history items
 
+    function readSvg(source: string): SVGSVGElement | null {
+        delete svgPreview.dataset.rejection;
+        try { return SvgSafety.sanitizeSvg(source); }
+        catch (error) {
+            svgPreview.dataset.rejection = errorMessage(error);
+            svgPreview.textContent = errorMessage(error);
+            [saveBtn, copyBtn, savePngBtn, saveCustomPngBtn].forEach(button => button.disabled = true);
+            return null;
+        }
+    }
+    function serializedSvg(source: string): string | null {
+        const svg = readSvg(source);
+        return svg ? new XMLSerializer().serializeToString(svg) : null;
+    }
+
     // --- Auto-Resize Textarea Function ---
     function autoResizeTextarea(textarea: HTMLTextAreaElement) {
         textarea.style.height = 'auto'; // Temporarily shrink to get accurate scrollHeight
@@ -201,6 +216,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Function to update SVG preview AND dependent button states
     function updatePreview(svgCode: string) {
+        svgPreview.dataset.revision = String(Number(svgPreview.dataset.revision || 0) + 1);
         // Clear previous preview content
         svgPreview.innerHTML = '';
         const svgPresent = svgCode && svgCode.trim().length > 0;
@@ -232,11 +248,11 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const svgElement = SvgSafety.sanitizeSvg(svgCode);
+        const svgElement = readSvg(svgCode);
         if (svgElement) {
             svgPreview.appendChild(svgElement);
         } else {
-            svgPreview.textContent = 'Invalid or incomplete SVG code.';
+            svgPreview.textContent = svgPreview.dataset.rejection || 'Invalid or incomplete SVG code.';
             [copyBtn, saveBtn, savePngBtn, saveCustomPngBtn].forEach(btn => btn.disabled = true);
         }
     }
@@ -322,7 +338,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Function to handle saving SVG
     function handleSave() {
-        const svgCode = SvgSafety.serializeSvg(svgCodeEditor.value);
+        const svgCode = serializedSvg(svgCodeEditor.value);
         if (!svgCode) {
             alert('Nothing to save. Generate or enter SVG code first.');
             return;
@@ -343,7 +359,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Function to handle copying SVG code
     function handleCopy() {
-        const svgCode = SvgSafety.serializeSvg(svgCodeEditor.value);
+        const svgCode = serializedSvg(svgCodeEditor.value);
         if (!svgCode) {
             // Optionally provide feedback if there's nothing to copy
             // alert('Nothing to copy.');
@@ -980,7 +996,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function generatePngFromSvgPreview(minDimension = 1000): Promise<string> {
         return new Promise<string>((resolve, reject) => {
             const svgPreviewDiv = element<HTMLDivElement>('svg-preview');
-            const svgElement = SvgSafety.sanitizeSvg(svgCodeEditor.value);
+            const svgElement = readSvg(svgCodeEditor.value);
 
             if (!svgElement) {
                 return reject(new Error('No SVG in preview to generate PNG.'));
@@ -1212,7 +1228,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Function to update PNG dimension inputs based on aspect ratio
     function updatePngDimensions(changedInput: HTMLInputElement) {
-        const svgElement = SvgSafety.sanitizeSvg(svgCodeEditor.value);
+        const svgElement = readSvg(svgCodeEditor.value);
         if (!svgElement) {
             console.warn("updatePngDimensions: No SVG found in preview.");
             return; // No SVG, can't calculate
@@ -1268,7 +1284,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Update Save PNG Functionality ---
     async function handleSavePng(event: Event, useCustomDimensions = false) {
         const svgPreviewDiv = element<HTMLDivElement>('svg-preview');
-        const svgElement = SvgSafety.sanitizeSvg(svgCodeEditor.value);
+        const svgElement = readSvg(svgCodeEditor.value);
 
         if (!svgElement) {
             alert('No SVG in preview to save as PNG.');
@@ -1383,7 +1399,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateCustomPngButtonState() {
         const widthVal = parseInt(pngWidthInput.value, 10) || 0;
         const heightVal = parseInt(pngHeightInput.value, 10) || 0;
-        const svgPresent = !!SvgSafety.sanitizeSvg(svgCodeEditor.value);
+        const svgPresent = !!readSvg(svgCodeEditor.value);
 
         if (svgPresent && (widthVal > 0 || heightVal > 0)) {
             saveCustomPngBtn.disabled = false;

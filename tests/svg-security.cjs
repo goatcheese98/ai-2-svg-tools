@@ -24,11 +24,52 @@ const {valid,bad} = require('./fixtures.json');
  });
  await page.goto(origin);
  if(process.env.SCREENSHOT_DIR) {fs.mkdirSync(process.env.SCREENSHOT_DIR,{recursive:true});await page.screenshot({path:path.join(process.env.SCREENSHOT_DIR,'desktop-before.png'),fullPage:true});}
- async function edit(code) {await page.locator('#svg-code-editor').fill(code);await page.waitForTimeout(400);}
+ async function edit(code) {
+  const revision=await page.locator('#svg-preview').getAttribute('data-revision');
+  await page.locator('#svg-code-editor').fill(code);
+  await page.waitForFunction(old=>document.querySelector('#svg-preview').dataset.revision !== old,revision);
+ }
  async function safe() {
   const unsafe=await page.locator('#svg-preview').evaluate(el=>!!el.querySelector('script,foreignObject,image,style,animate,[onmouseover],a[href^="javascript:"]'));
   assert.equal(unsafe,false,'preview must remove active content and resource loads');
  }
+ // Complexity limits reject the complete document, never silently truncate it.
+ const wrap=body=>`<svg xmlns="http://www.w3.org/2000/svg" width="100" height="50">${body}</svg>`;
+ for(const [code,reason] of [
+  [wrap('<rect/>'.repeat(2000)), 'elements'],
+  [wrap('<rect x="1" y="1" width="1" height="1" rx="1" ry="1" opacity="1"/>'.repeat(1900)), 'attributes'],
+  [wrap('<g>'.repeat(32)+'<rect/>'+'</g>'.repeat(32)), 'nesting'],
+  [wrap('<path d="M0 0 '+ 'L1 1 '.repeat(10000)+'"/>'), 'geometry'],
+  [wrap('<text>'+ 'x'.repeat(32769)+'</text>'), 'text'],
+  [wrap('<defs><g id="a"><use href="#a"/></g></defs><use href="#a"/>'),'Cyclic'],
+  [wrap('<defs><g id="a">'+ '<rect/>'.repeat(100)+'</g></defs>'+ '<use href="#a"/>'.repeat(100)), 'expansion'],
+  [wrap('<pattern id="p" width="0.001" height="0.001"/>'), 'Pattern'],
+  [wrap('<rect width="1e999"/>'), 'finite'],
+  [wrap('<use href="#missing"/>'), 'no definition'],
+  [' '.repeat(262145), 'source length'],
+ ]) {
+  await edit(code);assert.equal(await page.locator('#svg-preview svg').count(),0);
+  assert((await page.locator('#svg-preview').textContent()).includes(reason),reason);
+  assert.equal(await page.locator('#save-btn').isDisabled(),true);
+ }
+ const nearNodes=valid.replace('</svg>','<g>'+ '<circle r="1"/>'.repeat(1980)+'</g></svg>');
+ await edit(nearNodes);assert.equal(await page.locator('#svg-preview circle').count(),1980,'near-node-limit geometry preserved');
+ assert.equal(await page.locator('#svg-preview text').textContent(),'Hello');
+ assert.equal(await page.locator('#svg-preview linearGradient').count(),1);
+ const nearGeometry=valid.replace('</svg>','<path d="M0 0 '+ 'L1 1 '.repeat(9990)+'"/></svg>');
+ await edit(nearGeometry);assert((await page.locator('#svg-preview path').getAttribute('d')).trim() === ('M0 0 '+ 'L1 1 '.repeat(9990)).trim(),'near-geometry-limit path not truncated');
+ const nearText='x'.repeat(32760);
+ await edit(valid.replace('Hello',nearText));assert.equal((await page.locator('#svg-preview text').textContent()).length,32760,'near-text-limit content preserved');
+ const nearDepth=valid.replace('</svg>','<g>'.repeat(29)+'<circle r="1"/>'+'</g>'.repeat(29)+'</svg>');
+ await edit(nearDepth);assert.equal(await page.locator('#svg-preview circle').count(),1);
+ const nearReferences=valid.replace('</svg>','<defs><g id="many">'+ '<circle r="1"/>'.repeat(99)+'</g></defs>'+ '<use href="#many"/>'.repeat(98)+'</svg>');
+ await edit(nearReferences);assert.equal(await page.locator('#svg-preview use').count(),98,'near-expansion-limit references preserved');
+ const nearSource=valid.replace('</svg>','<!--'+ 'x'.repeat(262144-valid.length-7)+'--></svg>');
+ await edit(nearSource);assert.equal(await page.locator('#svg-preview text').textContent(),'Hello');
+ await edit(nearGeometry);
+ const nearDownload=page.waitForEvent('download');await page.locator('#save-btn').click();
+ assert(fs.readFileSync(await (await nearDownload).path(),'utf8').includes('Hello'),'near-limit SVG exports valid text');
+ const nearPng=page.waitForEvent('download');await page.locator('#save-png-btn').click();assert.equal(fs.readFileSync(await (await nearPng).path()).subarray(1,4).toString(),'PNG');
  await edit(bad); await safe();
  const variants = ['<g onload="alert(1)"/>', '<use href="//evil.invalid/x"/>', '<use href="data:image/svg+xml,bad"/>', '<use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://evil.invalid/x"/>', '<rect style="fill:url(https://evil.invalid/x)"/>', '<rect fill="url(&quot;https://evil.invalid/x&quot;)"/>', '<a href="java&#x73;cript:alert(1)">x</a>', '<set attributeName="onload" to="alert(1)"/>'];
  for (const payload of variants) {
@@ -41,7 +82,7 @@ const {valid,bad} = require('./fixtures.json');
  // Saved history is untrusted, including legacy records.
  await page.evaluate(svgCode=>sessionStorage.setItem('svgGeneratorHistory',JSON.stringify([{prompt:'history',svgCode,complexity:3,colorUsage:3,model:'offline',timestamp:new Date().toISOString()}])),bad);
  await page.reload(); await page.locator('#history-list li').first().click();await safe();
- await page.locator('#prompt').fill('offline');await page.locator('#generate-btn').click();await page.waitForTimeout(200);await safe();
+ await page.locator('#prompt').fill('offline');await page.locator('#generate-btn').click();await page.waitForFunction(()=>document.querySelector('#status-message').textContent.includes('successfully'));await safe();
  await page.locator('#refinement-prompt').fill('offline refine');await page.locator('#refine-btn').click();
  await page.waitForFunction(()=>document.querySelector('#refine-status').textContent.includes('successful'));await safe();
  await page.locator('[data-tab="extractor-tab-content"]').click();

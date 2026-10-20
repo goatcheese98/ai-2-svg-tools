@@ -992,7 +992,7 @@
     const originalDocument = document2;
     const currentScript = originalDocument.currentScript;
     window2.DocumentFragment;
-    const HTMLTemplateElement = window2.HTMLTemplateElement, Node = window2.Node, Element = window2.Element, NodeFilter = window2.NodeFilter;
+    const HTMLTemplateElement = window2.HTMLTemplateElement, Node2 = window2.Node, Element = window2.Element, NodeFilter = window2.NodeFilter;
     window2.NamedNodeMap === void 0 && (window2.NamedNodeMap || window2.MozNamedAttrMap);
     window2.HTMLFormElement;
     const DOMParser2 = window2.DOMParser, trustedTypes = window2.trustedTypes;
@@ -1005,9 +1005,9 @@
     const getParentNode = lookupGetter(ElementPrototype, "parentNode");
     const getShadowRoot = lookupGetter(ElementPrototype, "shadowRoot");
     const getAttributes = lookupGetter(ElementPrototype, "attributes");
-    const getNodeType = Node && Node.prototype ? lookupGetter(Node.prototype, "nodeType") : null;
-    const getNodeName = Node && Node.prototype ? lookupGetter(Node.prototype, "nodeName") : null;
-    const getOwnerDocument = Node && Node.prototype ? lookupGetter(Node.prototype, "ownerDocument") : null;
+    const getNodeType = Node2 && Node2.prototype ? lookupGetter(Node2.prototype, "nodeType") : null;
+    const getNodeName = Node2 && Node2.prototype ? lookupGetter(Node2.prototype, "nodeName") : null;
+    const getOwnerDocument = Node2 && Node2.prototype ? lookupGetter(Node2.prototype, "ownerDocument") : null;
     const _readNodeType = function _readNodeType2(node) {
       return getNodeType ? getNodeType(node) : node.nodeType;
     };
@@ -2156,10 +2156,99 @@
       data.keepAttr = localPaint.test(value);
     }
   });
+  var SVG_LIMITS = {
+    sourceCharacters: 262144,
+    elements: 2e3,
+    depth: 32,
+    attributes: 12e3,
+    geometryTokens: 2e4,
+    textCharacters: 32768,
+    expandedElements: 1e4,
+    expandedGeometryTokens: 4e4,
+    referenceDepth: 16,
+    coordinateMagnitude: 1e6
+  };
+  function reject(message) {
+    throw new Error(`SVG rejected: ${message} Simplify the artwork and try again.`);
+  }
+  var numericGeometry = /* @__PURE__ */ new Set(["d", "points", "transform", "gradientTransform", "viewBox", "width", "height", "x", "y", "x1", "y1", "x2", "y2", "cx", "cy", "r", "rx", "ry", "dx", "dy", "font-size", "stroke-width", "stroke-dasharray", "stroke-dashoffset"]);
+  function checkTree(root) {
+    let elements = 0, attributes = 0, geometry = 0, text2 = 0;
+    const stack = [[root, 1]];
+    while (stack.length) {
+      const [node, depth] = stack.pop();
+      if (++elements > SVG_LIMITS.elements) reject(`maximum ${SVG_LIMITS.elements} elements exceeded.`);
+      if (depth > SVG_LIMITS.depth) reject(`maximum nesting depth ${SVG_LIMITS.depth} exceeded.`);
+      attributes += node.attributes.length;
+      if (attributes > SVG_LIMITS.attributes) reject(`maximum ${SVG_LIMITS.attributes} attributes exceeded.`);
+      if (node.localName === "pattern") reject("Pattern tiling is unsupported; replace it with explicit geometry.");
+      for (const attribute of node.attributes) {
+        if (numericGeometry.has(attribute.localName)) {
+          const numbers = attribute.value.match(/[-+]?(?:\d*\.\d+|\d+\.?\d*)(?:e[-+]?\d+)?/gi) || [];
+          geometry += numbers.length;
+          if (numbers.some((value) => !Number.isFinite(Number(value)) || Math.abs(Number(value)) > SVG_LIMITS.coordinateMagnitude)) {
+            reject(`geometry coordinates must be finite and at most ${SVG_LIMITS.coordinateMagnitude} in magnitude.`);
+          }
+        }
+      }
+      if (geometry > SVG_LIMITS.geometryTokens) reject(`maximum ${SVG_LIMITS.geometryTokens} geometry numbers exceeded.`);
+      for (const child of node.childNodes) {
+        if (child.nodeType === Node.TEXT_NODE) text2 += child.textContent?.length || 0;
+      }
+      if (text2 > SVG_LIMITS.textCharacters) reject(`maximum ${SVG_LIMITS.textCharacters} text characters exceeded.`);
+      for (const child of node.children) stack.push([child, depth + 1]);
+    }
+  }
+  function checkReferences(root) {
+    const nodes = [root, ...root.querySelectorAll("*")];
+    const ids = /* @__PURE__ */ new Map();
+    for (const node of nodes) {
+      if (!node.id) continue;
+      if (ids.has(node.id)) reject("Duplicate SVG IDs are ambiguous; give each definition a unique ID.");
+      ids.set(node.id, node);
+    }
+    const visiting = /* @__PURE__ */ new Set();
+    const memo = /* @__PURE__ */ new Map();
+    function cost(node) {
+      if (visiting.has(node)) reject("Cyclic SVG references are unsupported; flatten the cycle.");
+      const cached = memo.get(node);
+      if (cached) return cached;
+      visiting.add(node);
+      const total = { elements: 1, geometry: 0, references: 0 };
+      for (const attribute of node.attributes) {
+        if (numericGeometry.has(attribute.localName)) {
+          total.geometry += (attribute.value.match(/[-+]?(?:\d*\.\d+|\d+\.?\d*)(?:e[-+]?\d+)?/gi) || []).length;
+        }
+      }
+      const edges = Array.from(node.children, (child) => [child, false]);
+      for (const attribute of node.attributes) {
+        const match = attribute.localName === "href" ? attribute.value.match(/^#(.+)$/) : attribute.value.match(/^url\(\s*['"]?#([\w.-]+)['"]?\s*\)$/);
+        if (!match) continue;
+        const target = ids.get(match[1]);
+        if (!target) reject(`Reference #${match[1]} has no definition in this SVG.`);
+        edges.push([target, true]);
+      }
+      for (const [target, reference] of edges) {
+        const next = cost(target);
+        total.elements += next.elements;
+        total.geometry += next.geometry;
+        total.references = Math.max(total.references, next.references + Number(reference));
+        if (total.elements > SVG_LIMITS.expandedElements) reject(`reference expansion exceeds ${SVG_LIMITS.expandedElements} elements; flatten repeated use/clip/mask definitions.`);
+        if (total.geometry > SVG_LIMITS.expandedGeometryTokens) reject(`reference expansion exceeds ${SVG_LIMITS.expandedGeometryTokens} geometry numbers.`);
+        if (total.references > SVG_LIMITS.referenceDepth) reject(`reference chain exceeds ${SVG_LIMITS.referenceDepth} links.`);
+      }
+      visiting.delete(node);
+      memo.set(node, total);
+      return total;
+    }
+    cost(root);
+  }
   function sanitizeSvg(source) {
+    if (source.length > SVG_LIMITS.sourceCharacters) reject(`maximum source length ${SVG_LIMITS.sourceCharacters} characters exceeded.`);
     if (!source.trim()) return null;
     const parsed = new DOMParser().parseFromString(source, "image/svg+xml");
     if (parsed.querySelector("parsererror") || parsed.doctype || parsed.documentElement.localName !== "svg") return null;
+    checkTree(parsed.documentElement);
     const clean = purify_default.sanitize(source, {
       ALLOWED_TAGS: tags,
       ALLOWED_ATTR: attrs,
@@ -2170,11 +2259,8 @@
     });
     const svg2 = clean.firstElementChild;
     if (!(svg2 instanceof SVGSVGElement)) return null;
+    checkReferences(svg2);
     return svg2;
-  }
-  function serializeSvg(source) {
-    const svg2 = sanitizeSvg(source);
-    return svg2 ? new XMLSerializer().serializeToString(svg2) : null;
   }
 
   // browser/app.ts
@@ -2260,6 +2346,21 @@
     let currentImageDataUrl = null;
     let debounceTimer;
     const MAX_HISTORY_ITEMS = 15;
+    function readSvg(source) {
+      delete svgPreview.dataset.rejection;
+      try {
+        return sanitizeSvg(source);
+      } catch (error) {
+        svgPreview.dataset.rejection = errorMessage(error);
+        svgPreview.textContent = errorMessage(error);
+        [saveBtn, copyBtn, savePngBtn, saveCustomPngBtn].forEach((button) => button.disabled = true);
+        return null;
+      }
+    }
+    function serializedSvg(source) {
+      const svg2 = readSvg(source);
+      return svg2 ? new XMLSerializer().serializeToString(svg2) : null;
+    }
     function autoResizeTextarea(textarea) {
       textarea.style.height = "auto";
       textarea.style.height = textarea.scrollHeight + "px";
@@ -2330,6 +2431,7 @@
       }
     }
     function updatePreview(svgCode) {
+      svgPreview.dataset.revision = String(Number(svgPreview.dataset.revision || 0) + 1);
       svgPreview.innerHTML = "";
       const svgPresent = svgCode && svgCode.trim().length > 0;
       copyBtn.disabled = !svgPresent;
@@ -2351,11 +2453,11 @@
         svgPreview.innerHTML = '<p style="color: #999;">Preview will appear here.</p>';
         return;
       }
-      const svgElement = sanitizeSvg(svgCode);
+      const svgElement = readSvg(svgCode);
       if (svgElement) {
         svgPreview.appendChild(svgElement);
       } else {
-        svgPreview.textContent = "Invalid or incomplete SVG code.";
+        svgPreview.textContent = svgPreview.dataset.rejection || "Invalid or incomplete SVG code.";
         [copyBtn, saveBtn, savePngBtn, saveCustomPngBtn].forEach((btn) => btn.disabled = true);
       }
     }
@@ -2426,7 +2528,7 @@
       }
     }
     function handleSave() {
-      const svgCode = serializeSvg(svgCodeEditor.value);
+      const svgCode = serializedSvg(svgCodeEditor.value);
       if (!svgCode) {
         alert("Nothing to save. Generate or enter SVG code first.");
         return;
@@ -2443,7 +2545,7 @@
       URL.revokeObjectURL(url);
     }
     function handleCopy() {
-      const svgCode = serializeSvg(svgCodeEditor.value);
+      const svgCode = serializedSvg(svgCodeEditor.value);
       if (!svgCode) {
         return;
       }
@@ -2909,11 +3011,11 @@
       }
     }
     function generatePngFromSvgPreview(minDimension = 1e3) {
-      return new Promise((resolve, reject) => {
+      return new Promise((resolve, reject2) => {
         const svgPreviewDiv = element("svg-preview");
-        const svgElement = sanitizeSvg(svgCodeEditor.value);
+        const svgElement = readSvg(svgCodeEditor.value);
         if (!svgElement) {
-          return reject(new Error("No SVG in preview to generate PNG."));
+          return reject2(new Error("No SVG in preview to generate PNG."));
         }
         const svgString = new XMLSerializer().serializeToString(svgElement);
         let svgWidth = svgElement.getAttribute("width") || svgElement.viewBox?.baseVal?.width || 300;
@@ -2952,12 +3054,12 @@
             resolve(pngUrl);
           } catch (e) {
             URL.revokeObjectURL(url);
-            reject(new Error("Error converting canvas to PNG: " + errorMessage(e)));
+            reject2(new Error("Error converting canvas to PNG: " + errorMessage(e)));
           }
         };
         img.onerror = (e) => {
           URL.revokeObjectURL(url);
-          reject(new Error("Error loading SVG into image element for PNG generation."));
+          reject2(new Error("Error loading SVG into image element for PNG generation."));
         };
         img.src = url;
       });
@@ -3101,7 +3203,7 @@
     }
     let currentSvgAspectRatio = 1;
     function updatePngDimensions(changedInput) {
-      const svgElement = sanitizeSvg(svgCodeEditor.value);
+      const svgElement = readSvg(svgCodeEditor.value);
       if (!svgElement) {
         console.warn("updatePngDimensions: No SVG found in preview.");
         return;
@@ -3146,7 +3248,7 @@
     }
     async function handleSavePng(event, useCustomDimensions = false) {
       const svgPreviewDiv = element("svg-preview");
-      const svgElement = sanitizeSvg(svgCodeEditor.value);
+      const svgElement = readSvg(svgCodeEditor.value);
       if (!svgElement) {
         alert("No SVG in preview to save as PNG.");
         return;
@@ -3222,7 +3324,7 @@
     function updateCustomPngButtonState() {
       const widthVal = parseInt(pngWidthInput.value, 10) || 0;
       const heightVal = parseInt(pngHeightInput.value, 10) || 0;
-      const svgPresent = !!sanitizeSvg(svgCodeEditor.value);
+      const svgPresent = !!readSvg(svgCodeEditor.value);
       if (svgPresent && (widthVal > 0 || heightVal > 0)) {
         saveCustomPngBtn.disabled = false;
         saveCustomPngBtn.classList.add("primary-btn");
