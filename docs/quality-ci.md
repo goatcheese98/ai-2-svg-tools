@@ -16,4 +16,7 @@ npm run build
 
 The cloud initially uses /usr/bin/chromium. Hosted CI explicitly installs the Playwright-pinned browser and passes CHROMIUM_PATH='' to select it. The same pinned browser can be used in cloud with `npx --no-install playwright install chromium` followed by `CHROMIUM_PATH='' .venv/bin/python tests/run_browser.py`. No paid API call or production server is involved. A workflow definition alone is not a passing hosted run; the PR report must link the actual run and state its result after publication.
 
-The provider follow-up adds three installed-SDK offline HTTP serialization/lifecycle/error contracts alongside the six Flask boundary tests (nine unittest cases total); the workflow includes both.
+The provider follow-up adds three installed-SDK offline HTTP serialization/lifecycle/error contracts alongside the six Flask boundary tests (18 unittest cases total after adding nine paid-security cases); the workflow includes both.
+
+
+Paid-route follow-up: docs/paid-access.md now documents required verified existing identity and PostgreSQL admission. Hosted paid mode is explicitly disabled; a provider key alone is insufficient. The quality workflow adds a pinned disposable PostgreSQL service and 18 Python tests plus authorized/unauthorized browser journeys; no production resource was configured. Provider HTTP/output caps are now further constrained by the reviewed remaining admission deadline/policy.

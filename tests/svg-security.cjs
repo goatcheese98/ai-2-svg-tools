@@ -88,7 +88,17 @@ const {valid,bad} = require('./fixtures.json');
  // Saved history is untrusted, including legacy records.
  await page.evaluate(svgCode=>sessionStorage.setItem('svgGeneratorHistory',JSON.stringify([{prompt:'history',svgCode,complexity:3,colorUsage:3,model:'offline',timestamp:new Date().toISOString()}])),bad);
  await page.reload(); await page.locator('#history-list li').first().click();await safe();
- await page.locator('#prompt').fill('offline');await page.locator('#generate-btn').click();await page.waitForFunction(()=>document.querySelector('#status-message').textContent.includes('successfully'));await safe();
+ await page.locator('#prompt').fill('offline');
+ if(process.env.APP_URL) {
+  await page.locator('#generate-btn').click();
+  await page.waitForFunction(()=>document.querySelector('#status-message').textContent.includes('Sign in'));
+  await safe();
+  const forged=await page.evaluate(async()=>{const r=await fetch('/generate',{method:'POST',headers:{'Content-Type':'application/json','X-User':'alice',Origin:location.origin,Authorization:'Bearer forged'},body:JSON.stringify({prompt:'fixture'})});return r.status;});
+  assert.equal(forged,401,'caller-chosen headers are not identity');
+  const identity=JSON.parse(fs.readFileSync(path.join(root,'work/browser-identity.json'),'utf8'));
+  await page.setExtraHTTPHeaders({Authorization:'Bearer '+identity.token});
+ }
+ await page.locator('#generate-btn').click();await page.waitForFunction(()=>document.querySelector('#status-message').textContent.includes('successfully'));await safe();
  await page.locator('#refinement-prompt').fill('offline refine');await page.locator('#refine-btn').click();
  await page.waitForFunction(()=>document.querySelector('#refine-status').textContent.includes('successful'));await safe();
  await page.locator('[data-tab="extractor-tab-content"]').click();
@@ -135,6 +145,6 @@ const {valid,bad} = require('./fixtures.json');
  assert.deepEqual(external,[],'no untrusted external loads across all workflows');
  await page.evaluate(()=>sessionStorage.setItem('svgGeneratorHistory','{bad JSON'));await page.reload();assert.equal(await page.locator('#history-list li').count(),0);
  assert.deepEqual(errors,[],'no browser runtime errors');
- console.log('PASS: malicious editor/history/mocked generation/refinement, image analysis/upload isolation and recreation, URL variants, immediate sanitized SVG download, valid geometry/gradient/text, default/custom PNG dimensions and pixels, invalid SVG, raster cap, fonts/focus/themes');
+ console.log('PASS: malicious editor/history/mocked generation/refinement, image analysis/upload isolation and recreation, URL variants, immediate sanitized SVG download, valid geometry/gradient/text, default/custom PNG dimensions and pixels, invalid SVG, raster cap, fonts/focus/themes, paid unauthorized/authorized admission');
  } finally {await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1});

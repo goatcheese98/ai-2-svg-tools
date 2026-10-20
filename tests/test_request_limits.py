@@ -8,10 +8,12 @@ from unittest.mock import patch
 from PIL import Image
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import app
+from access_fixture import PaidFixture
 
 class RequestLimits(unittest.TestCase):
     def setUp(self):
-        self.client = app.app.test_client()
+        self.access=PaidFixture();self.access.__enter__();self.addCleanup(self.access.__exit__)
+        self.client = self.access.client()
         self.key = patch.object(app, 'api_key', 'offline-fixture')
         self.model = patch.object(app, 'generate_content')
         self.key.start(); self.provider = self.model.start()

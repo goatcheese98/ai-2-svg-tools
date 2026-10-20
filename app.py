@@ -1,4 +1,7 @@
 import os
+import time
+import paid_access
+from paid_access import Denied
 from provider import generate_content, DEFAULT_MODEL, MODELS
 from flask import Flask, request, jsonify, render_template, g
 # from config import google_api_key # Import the API key - REMOVED
@@ -54,6 +57,35 @@ def decode_image(value):
         raise RequestEntityTooLarge()
     except (ValueError, binascii.Error, UnidentifiedImageError, OSError):
         raise BadRequest()
+
+@app.errorhandler(Denied)
+def denied_paid_request(error):
+    response=jsonify({'error':str(error)})
+    response.status_code=error.status
+    response.headers['Cache-Control']='no-store'
+    if error.status == 401:
+        response.headers['WWW-Authenticate']='Bearer'
+    return response
+
+@app.before_request
+def authorize_paid_request():
+    if request.path not in paid_access.PAID_ROUTES:
+        return
+    started=time.monotonic()
+    config=paid_access.settings()
+    if not api_key:
+        raise Denied(503,'Paid AI is disabled because the server provider is not configured. Local editing and exports remain available.')
+    principal,expires=paid_access.identity(config,request.headers)
+    expires=min(expires,config.policy['valid_until'])
+    g.paid_config=config
+    g.paid_principal=principal
+    g.paid_expires=expires
+    g.paid_deadline=min(started+config.policy['deadline_seconds'],time.monotonic()+expires-time.time())
+
+
+def paid_generate_content(key, model, contents):
+    return paid_access.execute(g.paid_config,g.paid_principal,g.paid_expires,g.paid_deadline,model,
+        lambda timeout,output: generate_content(key,model,contents,timeout_ms=timeout,max_output_tokens=output))
 
 @app.before_request
 def validate_payload():
@@ -127,7 +159,13 @@ def _clean_svg_response(raw_text: str) -> Optional[str]:
 @app.route('/')
 def index():
     """Serves the main HTML page."""
-    return render_template('index.html', models=MODELS, default_model=DEFAULT_MODEL)
+    models=MODELS
+    try:
+        models={name:MODELS[name] for name in paid_access.settings().policy['models']}
+    except Denied:
+        pass  # Public editor must not depend on identity/database/provider setup.
+    default=DEFAULT_MODEL if DEFAULT_MODEL in models else next(iter(models))
+    return render_template('index.html', models=models, default_model=default)
 
 @app.route('/generate', methods=['POST'])
 def generate_svg():
@@ -154,7 +192,7 @@ def generate_svg():
         return jsonify({"error": str(e)}), 400 # Prompt format error
 
     try:
-        response = generate_content(api_key, selected_model_name, full_prompt)
+        response = paid_generate_content(api_key, selected_model_name, full_prompt)
 
         # Check response and clean it using the helper function (R1)
         if hasattr(response, 'text') and response.text:
@@ -173,6 +211,8 @@ def generate_svg():
             print(error_message)
             return jsonify({"error": error_message}), 500
 
+    except Denied:
+        raise
     except Exception as e: # Catch potential errors during generation
         print('Provider operation failed; no response details logged.')
         return jsonify({"error": "An internal error occurred during SVG generation."}), 500
@@ -202,7 +242,7 @@ def analyze_image():
         # --- Gemini API Call using prompt_utils ---
         prompt_parts = format_analysis_prompt(context_prompt, image) # Use the new function
 
-        response = generate_content(api_key, model_name, prompt_parts)
+        response = paid_generate_content(api_key, model_name, prompt_parts)
         analysis_text = response.text
 
         # --- Parse the response (Updated Section Names & Order) ---
@@ -238,6 +278,8 @@ def analyze_image():
 
         return jsonify(sections)
 
+    except Denied:
+        raise
     except Exception as e:
         print('Provider operation failed; no response details logged.')
         error_message = 'Image analysis could not be completed. Try again or select another supported model.'
@@ -305,7 +347,7 @@ def convert_to_svg():
             "7. Output ONLY the raw SVG code, starting strictly with `<svg` and ending strictly with `</svg>`. No markdown fences, no XML declaration, no comments, no other text.",
         ]
 
-        response = generate_content(api_key, selected_model_name, prompt_parts)
+        response = paid_generate_content(api_key, selected_model_name, prompt_parts)
 
         # 4. Process Response
         if hasattr(response, 'text') and response.text:
@@ -323,6 +365,8 @@ def convert_to_svg():
             # Consider adding more specific feedback if the API provides it
             return jsonify({"error": error_message}), 500
 
+    except Denied:
+        raise
     except Exception as e:
         print('Provider operation failed; no response details logged.')
         # Add more specific error checking if needed (like for API key errors during this call)
@@ -394,7 +438,7 @@ def refine_svg():
             f"7. **Validity & Format:** Ensure the output is valid SVG code starting strictly with `<svg` and ending strictly with `</svg>`. No markdown, XML declaration, comments, or explanations."
         ])
 
-        response = generate_content(api_key, selected_model_name, prompt_parts)
+        response = paid_generate_content(api_key, selected_model_name, prompt_parts)
 
         # 3. Process Response
         if hasattr(response, 'text') and response.text:
@@ -409,6 +453,8 @@ def refine_svg():
             print(error_message)
             return jsonify({"error": error_message}), 500
 
+    except Denied:
+        raise
     except Exception as e:
         print('Provider operation failed; no response details logged.')
         return jsonify({"error": "An internal error occurred during SVG refinement."}), 500

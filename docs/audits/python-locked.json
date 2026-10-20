@@ -1,5 +1,5 @@
 {
-  "scope": "fresh installed final SDK runtime plus locked tooling",
+  "scope": "runtime and tooling including JWT/PostgreSQL admission",
   "dependencies": [
     {
       "name": "annotated-types",
@@ -187,6 +187,16 @@
       "vulnerabilities": []
     },
     {
+      "name": "psycopg",
+      "version": "3.3.6",
+      "vulnerabilities": []
+    },
+    {
+      "name": "psycopg-binary",
+      "version": "3.3.6",
+      "vulnerabilities": []
+    },
+    {
       "name": "py-serializable",
       "version": "2.1.0",
       "vulnerabilities": []
@@ -219,6 +229,11 @@
     {
       "name": "pygments",
       "version": "2.21.0",
+      "vulnerabilities": []
+    },
+    {
+      "name": "pyjwt",
+      "version": "2.15.1",
       "vulnerabilities": []
     },
     {

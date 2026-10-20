@@ -56,7 +56,7 @@
                             <option value="{{ model_id }}" {% if model_id == default_model %}selected{% endif %}>{{ label }}</option>
                             {% endfor %}
                         </select>
-                        <span class="tooltip-icon" data-tooltip="Select the AI model for SVG generation. 'Flash' models are faster, 'Argon' is a reasoning model; model availability and cost depend on your provider account.">?</span>
+                        <span class="tooltip-icon" data-tooltip="Select the AI model for SVG generation. 'Flash' models are faster, Only policy-enabled models may be used. Verified identity and shared admission budgets are required.">?</span>
                     </div>
                     <button id="generate-btn" class="primary-btn">Generate SVG</button>
                 </div>
@@ -104,7 +104,7 @@
                             <option value="{{ model_id }}" {% if model_id == default_model %}selected{% endif %}>{{ label }}</option>
                             {% endfor %}
                         </select>
-                        <span class="tooltip-icon" data-tooltip="Select the AI model for image analysis. 'Flash' models are faster, 'Argon' is a reasoning model; model availability and cost depend on your provider account.">?</span>
+                        <span class="tooltip-icon" data-tooltip="Select the AI model for image analysis. 'Flash' models are faster, Only policy-enabled models may be used. Verified identity and shared admission budgets are required.">?</span>
                     </div>
                     <button id="analyze-btn" class="primary-btn">Analyze Image</button>
                     <span class="loading-spinner" id="analyze-spinner"></span>
@@ -240,7 +240,7 @@
                             <option value="{{ model_id }}" {% if model_id == default_model %}selected{% endif %}>{{ label }}</option>
                             {% endfor %}
                     </select>
-                    <span class="tooltip-icon" data-tooltip="Select the AI model for refining the SVG. 'Flash' models are faster, 'Argon' is a reasoning model; model availability and cost depend on your provider account.">?</span>
+                    <span class="tooltip-icon" data-tooltip="Select the AI model for refining the SVG. 'Flash' models are faster, Only policy-enabled models may be used. Verified identity and shared admission budgets are required.">?</span>
                 </div>
                 <button id="refine-btn" class="primary-btn">Refine SVG</button>
                 <span class="loading-spinner" id="refine-spinner"></span>

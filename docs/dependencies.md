@@ -27,3 +27,6 @@ The original pip-tools hash-fetch attempts repeatedly timed out on PyPI JSON met
 
 
 The provider migration refreshes the runtime lock to google-genai 2.31.0 and removes google-generativeai and its unused dependencies. A separate fresh install (`/workspace/.venvs/svg-current` in cloud) was fully audited with the locked tooling; the current python-locked.json snapshot covers both runtime and tooling and is clean. No advisory suppressions or skip flags are used in CI.
+
+
+Paid-route follow-up: docs/paid-access.md now documents required verified existing identity and PostgreSQL admission. Hosted paid mode is explicitly disabled; a provider key alone is insufficient. The quality workflow adds a pinned disposable PostgreSQL service and 18 Python tests plus authorized/unauthorized browser journeys; no production resource was configured. Provider HTTP/output caps are now further constrained by the reviewed remaining admission deadline/policy.

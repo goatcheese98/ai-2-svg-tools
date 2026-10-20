@@ -9,10 +9,12 @@ import httpx
 from PIL import Image
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import app
+from access_fixture import PaidFixture
 import provider
 
 class ProviderContract(unittest.TestCase):
     def setUp(self):
+        self.access=PaidFixture();self.access.__enter__();self.addCleanup(self.access.__exit__)
         self.requests = []
         self.clients = []
         self.status = 200
@@ -41,9 +43,9 @@ class ProviderContract(unittest.TestCase):
         self.assertEqual(request.headers['x-goog-api-key'], 'offline-test-key')
         body = json.loads(request.content)
         self.assertEqual(body['generationConfig']['temperature'], 1.0)
-        self.assertEqual(body['generationConfig']['maxOutputTokens'], 32768)
+        self.assertEqual(body['generationConfig']['maxOutputTokens'], 8192)
         self.assertEqual(body['contents'][0]['parts'][0]['text'], 'a circle')
-        self.assertLessEqual(request.extensions['timeout']['read'], 60)
+        self.assertLessEqual(request.extensions['timeout']['read'], 20)
         self.clients[0][0].close.assert_called_once()
 
     def test_pil_image_serialization_and_malicious_output_contract(self):
@@ -58,7 +60,7 @@ class ProviderContract(unittest.TestCase):
 
     def test_flask_empty_error_and_unknown_model_are_safe(self):
         with patch.object(app,'api_key','offline-test-key'):
-            client=app.app.test_client()
+            client=self.access.client()
             self.body = {'candidates': []}
             response=client.post('/generate',json={'prompt':'fixture'})
             self.assertEqual(response.status_code,500)

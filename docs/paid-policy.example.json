@@ -1,0 +1,22 @@
+{
+  "valid_until": 0,
+  "global_requests_day": 20,
+  "principal_requests_day": 5,
+  "global_tokens_day": 20000000,
+  "principal_tokens_day": 6000000,
+  "global_cost_micro_day": 100000000,
+  "principal_cost_micro_day": 20000000,
+  "global_requests_minute": 10,
+  "principal_requests_minute": 5,
+  "global_inflight": 2,
+  "principal_inflight": 1,
+  "deadline_seconds": 15,
+  "models": {
+    "gemini-3.5-flash-lite": {
+      "output_tokens": 2048,
+      "requests_day": 20,
+      "input_micro_per_token": 0,
+      "output_micro_per_token": 0
+    }
+  }
+}

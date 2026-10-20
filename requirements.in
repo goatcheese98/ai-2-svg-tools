@@ -3,3 +3,6 @@ google-genai
 Pillow
 python-dotenv
 gunicorn
+
+PyJWT[crypto]
+psycopg[binary]
