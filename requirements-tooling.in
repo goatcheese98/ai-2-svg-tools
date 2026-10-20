@@ -1,0 +1,4 @@
+# Reproducible lock compiler, vulnerability scanner and installer toolchain.
+pip==26.2.1
+uv==0.12.23
+pip-audit==2.10.1
