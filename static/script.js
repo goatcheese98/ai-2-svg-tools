@@ -2245,6 +2245,7 @@
   }
   function sanitizeSvg(source) {
     if (source.length > SVG_LIMITS.sourceCharacters) reject(`maximum source length ${SVG_LIMITS.sourceCharacters} characters exceeded.`);
+    if (/<!DOCTYPE|<!ENTITY/i.test(source)) reject("DTD/entity declarations are unsupported; use literal SVG text.");
     if (!source.trim()) return null;
     const parsed = new DOMParser().parseFromString(source, "image/svg+xml");
     if (parsed.querySelector("parsererror") || parsed.doctype || parsed.documentElement.localName !== "svg") return null;

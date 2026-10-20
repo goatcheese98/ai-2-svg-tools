@@ -118,6 +118,7 @@ function checkReferences(root: Element): void {
 
 export function sanitizeSvg(source: string): SVGSVGElement | null {
   if (source.length > SVG_LIMITS.sourceCharacters) reject(`maximum source length ${SVG_LIMITS.sourceCharacters} characters exceeded.`);
+  if (/<!DOCTYPE|<!ENTITY/i.test(source)) reject('DTD/entity declarations are unsupported; use literal SVG text.');
   if (!source.trim()) return null;
   // XML validation is for useful failure behavior, not the security boundary.
   const parsed = new DOMParser().parseFromString(source, 'image/svg+xml');

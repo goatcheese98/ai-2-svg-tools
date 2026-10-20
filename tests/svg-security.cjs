@@ -8,6 +8,7 @@ const {valid,bad} = require('./fixtures.json');
  const browser = await chromium.launch({executablePath: process.env.CHROMIUM_PATH === '' ? undefined : (process.env.CHROMIUM_PATH || '/usr/bin/chromium'), args:['--no-sandbox']});
  try {
  const page = await browser.newPage();
+ await page.addInitScript(()=>{const Parser=window.DOMParser;window.__parserCalls=0;window.DOMParser=class extends Parser {parseFromString(...args) {window.__parserCalls++;return super.parseFromString(...args);}};});
  await page.addInitScript(()=>Object.defineProperty(navigator,'clipboard',{value:{writeText:async text=>{window.__copied=text;}}})); const external=[]; const errors=[];page.on('pageerror',e=>errors.push(e.message));
  const origin=process.env.APP_URL || 'http://svg.test';
  await page.emulateMedia({colorScheme:'dark'});
@@ -33,6 +34,11 @@ const {valid,bad} = require('./fixtures.json');
   const unsafe=await page.locator('#svg-preview').evaluate(el=>!!el.querySelector('script,foreignObject,image,style,animate,[onmouseover],a[href^="javascript:"]'));
   assert.equal(unsafe,false,'preview must remove active content and resource loads');
  }
+ // DTD/entity amplification is rejected before either XML parser is invoked.
+ await page.evaluate(()=>window.__parserCalls=0);
+ await edit('<!DOCTYPE svg [<!ENTITY a "amplified text">]><svg xmlns="http://www.w3.org/2000/svg"><text>&a;</text></svg>');
+ assert.equal(await page.evaluate(()=>window.__parserCalls),0,'declarations rejected before parsing');
+ assert((await page.locator('#svg-preview').textContent()).includes('DTD/entity'));
  // Complexity limits reject the complete document, never silently truncate it.
  const wrap=body=>`<svg xmlns="http://www.w3.org/2000/svg" width="100" height="50">${body}</svg>`;
  for(const [code,reason] of [
