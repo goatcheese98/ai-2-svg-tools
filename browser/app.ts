@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const imagePreview = element<HTMLImageElement>('image-preview');
     const analysisPromptInput = element<HTMLTextAreaElement>('analysis-prompt');
     const analysisPromptContainer = analysisPromptInput.closest<HTMLElement>('.control-group')!; // Get parent div
-    const extractorModelSelect = element<HTMLSelectElement>('extractor-model-select'); 
+    const extractorModelSelect = element<HTMLSelectElement>('extractor-model-select');
     const extractorActionsContainer = document.querySelector<HTMLElement>('.extractor-actions')!; // Get the actions container
     const analyzeBtn = element<HTMLButtonElement>('analyze-btn');
     const analysisStatus = element<HTMLElement>('analysis-status');
@@ -138,7 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
             targetButton.classList.add('active');
         }
 
-        // --- ADDED: Show/Hide Shared Sections --- 
+        // --- ADDED: Show/Hide Shared Sections ---
         if (targetTabId === 'how-to-use-tab-content') {
             if (outputContainer) outputContainer.style.display = 'none';
             if (historyContainer) historyContainer.style.display = 'none';
@@ -147,7 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (outputContainer) outputContainer.style.display = 'block'; // Or 'flex' if it uses flex layout
             if (historyContainer) historyContainer.style.display = 'block';
         }
-        // --- END ADDED SECTION --- 
+        // --- END ADDED SECTION ---
     }
 
     tabButtons.forEach(button => {
@@ -160,7 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- UI Helper Functions ---
     function _update_generation_ui(is_loading: boolean, message: string | null = null, is_error = false) {
         generateBtn.disabled = is_loading;
-        
+
         // Toggle spinner visibility
         if (is_loading) {
             generateSpinner.classList.add('visible');
@@ -209,7 +209,7 @@ document.addEventListener('DOMContentLoaded', () => {
         copyBtn.disabled = !svgPresent;
         saveBtn.disabled = !svgPresent;
         savePngBtn.disabled = !svgPresent;
-        
+
         // Update button styles based on state (optional but nice)
         [copyBtn, saveBtn, savePngBtn].forEach(btn => {
             if (!svgPresent) {
@@ -217,13 +217,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 btn.classList.add('secondary-btn');
             } else {
                 // Turn Save buttons orange when enabled
-                if (btn !== copyBtn) { 
+                if (btn !== copyBtn) {
                     btn.classList.add('primary-btn');
                     btn.classList.remove('secondary-btn');
                 }
             }
         });
-        
+
         // Reset custom PNG button state when preview changes
         resetCustomPngButtonState();
 
@@ -417,7 +417,7 @@ document.addEventListener('DOMContentLoaded', () => {
         currentHistory.forEach((item, index) => {
             const li = document.createElement('li');
 
-            // --- UPDATE: Display 1-6 values in history --- 
+            // --- UPDATE: Display 1-6 values in history ---
             const versionString = item.version ? ` (v${item.version})` : ''; // Add version if it exists
             const parametersString = `(Cmplx:${item.complexity}, Clr:${item.colorUsage}, M:${item.model || 'Default'})`; // Use short labels
             const timestampString = new Date(item.timestamp).toLocaleString(); // Ensure consistent formatting
@@ -448,7 +448,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Update generator controls
             promptInput.value = item.prompt;
 
-            // --- UPDATE: Set active buttons based on history --- 
+            // --- UPDATE: Set active buttons based on history ---
             setActiveButton(complexityButtons, item.complexity);
             setActiveButton(colorUsageButtons, item.colorUsage);
 
@@ -521,11 +521,11 @@ document.addEventListener('DOMContentLoaded', () => {
             button.classList.add('active');
 
             const bgType = button.getAttribute('data-bg');
-            
+
             // Explicitly hide custom elements initially
             customBgColorPicker.style.display = 'none';
             customBgHexDisplay.style.display = 'none';
-            
+
             // Apply background based on type
             if (bgType === 'transparent') {
                 svgPreview.classList.remove('bg-white', 'bg-black');
@@ -543,14 +543,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Show the custom elements
                 customBgColorPicker.style.display = 'inline-block';
                 customBgHexDisplay.style.display = 'inline-block';
-                
+
                 // Apply the *current* color picker value when Custom is selected (RE-ENABLED to set initial state)
-                const currentColor = customBgColorPicker.value; 
+                const currentColor = customBgColorPicker.value;
                 svgPreview.classList.remove('bg-transparent', 'bg-white', 'bg-black');
-                svgPreview.style.backgroundColor = currentColor; 
-                customBgHexDisplay.textContent = customBgColorPicker.value; 
+                svgPreview.style.backgroundColor = currentColor;
+                customBgHexDisplay.textContent = customBgColorPicker.value;
             }
-            
+
             // Hide/Show custom picker elements (CSS handles this now based on .active class)
             // The JS only needs to set the .active class correctly
         });
@@ -590,7 +590,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Event Listeners
     generateBtn.addEventListener('click', handleGenerate);
 
-    // Update preview and related buttons on code editor input 
+    // Update preview and related buttons on code editor input
     svgCodeEditor.addEventListener('input', () => {
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => {
@@ -608,7 +608,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Copy code button listener (already exists, state handled by updatePreview)
     copyBtn.addEventListener('click', handleCopy);
-    
+
     // History listeners (already exist)
     clearHistoryBtn.addEventListener('click', clearHistory);
 
@@ -718,12 +718,12 @@ document.addEventListener('DOMContentLoaded', () => {
             analysisStatus.style.color = '';
             analyzeSpinner.classList.add('visible'); // Show spinner
 
-            // --- Immediately Create UI Structure --- 
+            // --- Immediately Create UI Structure ---
             if (analysisResultsSection) {
                 // Clear ONLY the results section, keep inputs/analyze button intact
-                analysisResultsSection.innerHTML = ''; 
+                analysisResultsSection.innerHTML = '';
                 // Hide buttons initially - reference the specific container
-                if (analysisButtonsContainer) analysisButtonsContainer.style.display = 'none'; 
+                if (analysisButtonsContainer) analysisButtonsContainer.style.display = 'none';
                 recreateSvgStatus.textContent = '';
 
                 // Create analysis section header
@@ -740,7 +740,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     let labelText = key.replace(/_/g, ' '); // Replace underscores with spaces
                     labelText = labelText.charAt(0).toUpperCase() + labelText.slice(1); // Capitalize first letter
                     // Add "Analysis" based on the key (summary removed)
-                    labelText += ' Analysis:'; 
+                    labelText += ' Analysis:';
 
                     const blockDiv = document.createElement('div');
                     blockDiv.classList.add('analysis-block');
@@ -750,7 +750,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     label.htmlFor = `analysis-${key}`;
 
                     const textarea = document.createElement('textarea');
-                    textarea.id = `analysis-${key}`; 
+                    textarea.id = `analysis-${key}`;
                     textarea.placeholder = 'Analyzing...'; // Placeholder text
                     textarea.value = ''; // Start empty
                     textarea.disabled = true; // Disable initially
@@ -770,10 +770,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Show Recreate/Copy Buttons, but disabled initially
                 if(analysisButtonsContainer) analysisButtonsContainer.style.display = 'flex'; // Use flex for display
-                recreateSvgBtn.style.display = 'inline-block'; 
-                copyMarkdownBtn.style.display = 'inline-block'; 
+                recreateSvgBtn.style.display = 'inline-block';
+                copyMarkdownBtn.style.display = 'inline-block';
                 recreateSvgBtn.disabled = true;
-                copyMarkdownBtn.disabled = true; 
+                copyMarkdownBtn.disabled = true;
                 analysisResultsSection.style.display = 'block'; // Make section visible
             }
             // --- End Immediate UI Creation ---
@@ -783,7 +783,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', },
                     body: JSON.stringify({
-                        image_data: currentImageDataUrl, 
+                        image_data: currentImageDataUrl,
                         context_prompt: contextPrompt,
                         model: selectedModel // Send extractor's selected model
                     })
@@ -815,7 +815,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     analysisStatus.className = 'status';
                     analysisStatus.style.color = 'var(--success-color)';
 
-                    // --- Populate Textareas --- 
+                    // --- Populate Textareas ---
                     if (analysisResultsSection) {
                          for (const [key, value] of Object.entries(data)) {
                             const textarea = document.getElementById(`analysis-${key}`);
@@ -828,10 +828,10 @@ document.addEventListener('DOMContentLoaded', () => {
                             }
                         }
                         // Enable buttons on success
-                        recreateSvgBtn.disabled = false; 
+                        recreateSvgBtn.disabled = false;
                         copyMarkdownBtn.disabled = false;
                     }
-                    // --- End Populate --- 
+                    // --- End Populate ---
                 } else {
                     // Handle backend error (e.g., API key issue, model error)
                      throw new Error(data.error || 'Unknown analysis error');
@@ -852,8 +852,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         ta.placeholder = '';
                         ta.style.color = 'var(--error-color)'; // Indicate error in textarea
                     });
-                    recreateSvgBtn.disabled = true; 
-                    copyMarkdownBtn.disabled = true; 
+                    recreateSvgBtn.disabled = true;
+                    copyMarkdownBtn.disabled = true;
                 }
             } finally {
                 analyzeBtn.disabled = false;
@@ -886,13 +886,13 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const analysisData = getAnalysisDataFromTextareas(); 
+        const analysisData = getAnalysisDataFromTextareas();
         if (!analysisData) {
              if (recreateSvgStatus) recreateSvgStatus.textContent = 'Analysis data is missing or incomplete.';
               return;
         }
-        
-        const selectedModel = extractorModelSelect.value; 
+
+        const selectedModel = extractorModelSelect.value;
 
         if (recreateSvgBtn) recreateSvgBtn.disabled = true;
         if (recreateSvgStatus) {
@@ -948,7 +948,7 @@ document.addEventListener('DOMContentLoaded', () => {
                      recreateSvgStatus.style.color = 'var(--success-color)';
                 }
                 // TODO: Save extractor result to history
-                // saveHistoryItemExtractor(...) 
+                // saveHistoryItemExtractor(...)
                 // updateHistoryList();
 
             } else {
@@ -1047,7 +1047,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function handleRefineSvg() {
         const refinementPrompt = refinementPromptInput.value.trim();
         const currentSvg = svgCodeEditor.value.trim();
-        const selectedModel = refineModelSelect.value; 
+        const selectedModel = refineModelSelect.value;
 
         if (!refinementPrompt) {
             refineStatus.textContent = 'Please enter refinement instructions.';
@@ -1070,12 +1070,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let pngDataUrl = null;
         try {
-            // --- Generate PNG --- 
+            // --- Generate PNG ---
             pngDataUrl = await generatePngFromSvgPreview(1000); // Default to 1000px min
 
             refineStatus.textContent = 'Refining SVG with analysis...'; // Update status (spinner stays visible)
 
-            // --- Fetch Call --- 
+            // --- Fetch Call ---
             const response = await fetch('/refine_svg', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', },
@@ -1119,7 +1119,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 refineStatus.className = 'status';
                 refineStatus.style.color = 'var(--success-color)';
                 // ... (Save to history) ...
-                const currentPrompt = promptInput.value.trim(); 
+                const currentPrompt = promptInput.value.trim();
                 // FIX: Convert NodeList to Array before using .find()
                 const activeComplexityButton = Array.from(complexityButtons).find(btn => btn.classList.contains('active'));
                 const complexity = activeComplexityButton ? parseInt(activeComplexityButton.dataset.value || "3", 10) : 3; // Default 3 if not found
@@ -1160,7 +1160,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Generate readable label/header
                 let labelText = key.replace(/_/g, ' ');
                 labelText = labelText.charAt(0).toUpperCase() + labelText.slice(1);
-                labelText += ' Analysis:'; 
+                labelText += ' Analysis:';
 
                 if (!firstSection) {
                     markdownString += '\n\n---\n\n'; // Add separator between sections
@@ -1223,9 +1223,9 @@ document.addEventListener('DOMContentLoaded', () => {
         let svgHeight = svgElement.getAttribute('height') || svgElement.viewBox?.baseVal?.height || 150;
         svgWidth = parseFloat(String(svgWidth)) || 300; // Fallback width
         svgHeight = parseFloat(String(svgHeight)) || 1; // Fallback height > 0
-        
+
         // Ensure height is not zero for division
-        if (svgHeight <= 0) svgHeight = 1; 
+        if (svgHeight <= 0) svgHeight = 1;
         currentSvgAspectRatio = svgWidth / svgHeight;
 
         const widthInput = pngWidthInput;
@@ -1237,7 +1237,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (changedInput === widthInput && widthVal > 0) {
             const calculatedHeight = Math.round(widthVal / currentSvgAspectRatio);
             heightInput.value = String(calculatedHeight);
-            heightInput.placeholder = String(calculatedHeight); 
+            heightInput.placeholder = String(calculatedHeight);
             heightInput.classList.add('auto-populated');
             widthInput.classList.remove('auto-populated');
         } else if (changedInput === heightInput && heightVal > 0) {
@@ -1279,17 +1279,17 @@ document.addEventListener('DOMContentLoaded', () => {
         const svgString = new XMLSerializer().serializeToString(svgElement);
 
         // Get dimensions from SVG for aspect ratio calculation
-        let svgWidth = svgElement.getAttribute('width') || svgElement.viewBox?.baseVal?.width || 300; 
-        let svgHeight = svgElement.getAttribute('height') || svgElement.viewBox?.baseVal?.height || 150; 
+        let svgWidth = svgElement.getAttribute('width') || svgElement.viewBox?.baseVal?.width || 300;
+        let svgHeight = svgElement.getAttribute('height') || svgElement.viewBox?.baseVal?.height || 150;
         svgWidth = parseFloat(String(svgWidth)) || 300;
         svgHeight = parseFloat(String(svgHeight)) || 150; // Keep a reasonable default height
         // Ensure height is not zero for division
-        if (svgHeight <= 0) svgHeight = 150; 
+        if (svgHeight <= 0) svgHeight = 150;
         const aspectRatio = svgWidth / svgHeight;
 
         let canvasWidth, canvasHeight;
-        
-        // --- Determine Canvas Dimensions --- 
+
+        // --- Determine Canvas Dimensions ---
         if (useCustomDimensions) {
             const userWidth = parseInt(pngWidthInput.value, 10);
             const userHeight = parseInt(pngHeightInput.value, 10);
@@ -1308,7 +1308,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Example: Use intrinsic SVG size or a default like 1000px wide
             canvasWidth = svgWidth; // Or set a fixed default canvasWidth = 1000;
             canvasHeight = svgHeight; // Or calc based on fixed canvasHeight = Math.round(canvasWidth / aspectRatio);
-            
+
             // --- OR use the previous scaling logic for default ---
             // const qualityScale = 2;
             // const minDimension = 1000;
@@ -1358,7 +1358,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 downloadLink.href = pngUrl;
                 // Differentiate filename based on save type
                 const baseFilename = promptInput.value.trim().substring(0, 30).replace(/[^a-z0-9]/gi, '_') || 'generated';
-                downloadLink.download = useCustomDimensions ? `${baseFilename}_custom.png` : `${baseFilename}.png`; 
+                downloadLink.download = useCustomDimensions ? `${baseFilename}_custom.png` : `${baseFilename}.png`;
                 document.body.appendChild(downloadLink);
                 downloadLink.click();
                 document.body.removeChild(downloadLink);
@@ -1373,7 +1373,7 @@ document.addEventListener('DOMContentLoaded', () => {
         img.onerror = (e) => {
             console.error("Error loading SVG into image element:", e);
             alert("Failed to load SVG for PNG conversion. Please check SVG code for errors.");
-            URL.revokeObjectURL(url); 
+            URL.revokeObjectURL(url);
         };
 
         img.src = url;
@@ -1395,7 +1395,7 @@ document.addEventListener('DOMContentLoaded', () => {
             saveCustomPngBtn.classList.add('secondary-btn');
         }
     }
-    
+
     // Helper to reset custom png button
     function resetCustomPngButtonState() {
         saveCustomPngBtn.disabled = true;
