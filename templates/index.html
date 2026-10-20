@@ -4,10 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI SVG Generator</title>
-    <!-- Google Font -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Licensed Geist fonts are served locally by style.css. -->
     <!-- Link to Stylesheet -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
@@ -54,12 +51,12 @@
                     <div class="model-selector">
                         <label for="model-select">Model:</label>
                         <select id="model-select" name="model">
-                            <option value="gemini-2.5-flash-preview-04-17" selected>Gemini 2.5 Flash Preview</option>
-                            <option value="gemini-2.5-pro-exp-03-25">Gemini 2.5 Pro Exp</option>
-                            <option value="gemini-2.0-flash-thinking-exp-01-21">Gemini 2.0 Flash Thinking Exp</option>
-                            <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+
+                            {% for model_id, label in models.items() %}
+                            <option value="{{ model_id }}" {% if model_id == default_model %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
                         </select>
-                        <span class="tooltip-icon" data-tooltip="Select the AI model for SVG generation. 'Flash' models are faster, 'Pro' may be more capable.">?</span>
+                        <span class="tooltip-icon" data-tooltip="Select the AI model for SVG generation. 'Flash' models are faster, Only policy-enabled models may be used. Verified identity and shared admission budgets are required.">?</span>
                     </div>
                     <button id="generate-btn" class="primary-btn">Generate SVG</button>
                 </div>
@@ -79,7 +76,7 @@
                 <!-- Wrap upload elements in a drop zone container -->
                 <div id="drop-zone" class="drop-zone">
                     <p class="drop-zone-prompt">Drag & Drop Image Here</p>
-                    <p class="upload-limit-note">(Max file size: ~16MB, server configured)</p>
+                    <p class="upload-limit-note">(PNG, JPEG, WebP or GIF; max decoded file 4 MiB, 16 million pixels)</p>
                     <div class="upload-area">
                         <!-- Keep existing label, hidden input, button, span -->
                         <label for="image-upload">Or Upload Image:</label>
@@ -102,12 +99,12 @@
                     <div class="model-selector extractor-model-selector">
                         <label for="extractor-model-select">Model:</label>
                         <select id="extractor-model-select" name="extractor-model">
-                            <option value="gemini-2.5-flash-preview-04-17" selected>Gemini 2.5 Flash Preview</option>
-                            <option value="gemini-2.5-pro-exp-03-25">Gemini 2.5 Pro Exp</option>
-                            <option value="gemini-2.0-flash-thinking-exp-01-21">Gemini 2.0 Flash Thinking Exp</option>
-                            <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+
+                            {% for model_id, label in models.items() %}
+                            <option value="{{ model_id }}" {% if model_id == default_model %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
                         </select>
-                        <span class="tooltip-icon" data-tooltip="Select the AI model for image analysis. 'Flash' models are faster, 'Pro' may be more capable.">?</span>
+                        <span class="tooltip-icon" data-tooltip="Select the AI model for image analysis. 'Flash' models are faster, Only policy-enabled models may be used. Verified identity and shared admission budgets are required.">?</span>
                     </div>
                     <button id="analyze-btn" class="primary-btn">Analyze Image</button>
                     <span class="loading-spinner" id="analyze-spinner"></span>
@@ -148,7 +145,7 @@
                 <ol>
                     <li>Enter a clear description of the SVG you want in the text area (e.g., "a red heart with a black outline").</li>
                     <li>Adjust the 'Complexity' and 'Color Usage' buttons to guide the AI (Medium is default). Hover over the '?' icons for details.</li>
-                    <li>Select an AI 'Model'. 'Flash' models are faster; 'Pro' models might offer higher quality.</li>
+                    <li>Select an AI 'Model'. 'Flash' models are faster; 'Argon' is a reasoning model; availability and cost depend on your provider account.</li>
                     <li>Click 'Generate SVG'.</li>
                     <li>Review the generated SVG code in the editor and the visual preview.</li>
                     <li>Use the 'Refine SVG' section below the preview to provide further instructions (e.g., "make the circle blue", "add a yellow star").</li>
@@ -238,12 +235,12 @@
                 <div class="model-selector refine-model-selector">
                     <label for="refine-model-select">Model:</label>
                     <select id="refine-model-select" name="refine-model">
-                        <option value="gemini-2.5-flash-preview-04-17" selected>Gemini 2.5 Flash Preview</option>
-                        <option value="gemini-2.5-pro-exp-03-25">Gemini 2.5 Pro Exp</option>
-                        <option value="gemini-2.0-flash-thinking-exp-01-21">Gemini 2.0 Flash Thinking Exp</option>
-                        <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+
+                            {% for model_id, label in models.items() %}
+                            <option value="{{ model_id }}" {% if model_id == default_model %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
                     </select>
-                    <span class="tooltip-icon" data-tooltip="Select the AI model for refining the SVG. 'Flash' models are faster, 'Pro' may be more capable.">?</span>
+                    <span class="tooltip-icon" data-tooltip="Select the AI model for refining the SVG. 'Flash' models are faster, Only policy-enabled models may be used. Verified identity and shared admission budgets are required.">?</span>
                 </div>
                 <button id="refine-btn" class="primary-btn">Refine SVG</button>
                 <span class="loading-spinner" id="refine-spinner"></span>

@@ -1,6 +1,9 @@
 import os
-import google.generativeai as genai
-from flask import Flask, request, jsonify, render_template
+import time
+import paid_access
+from paid_access import Denied
+from provider import generate_content, DEFAULT_MODEL, MODELS
+from flask import Flask, request, jsonify, render_template, g
 # from config import google_api_key # Import the API key - REMOVED
 import re
 from prompt_utils import format_svg_prompt, format_analysis_prompt # Import the prompt formatting utility and new function
@@ -8,41 +11,124 @@ from typing import Optional, Dict, Any # Import Dict, Any
 from dotenv import load_dotenv
 import base64
 from io import BytesIO
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
+from werkzeug.exceptions import BadRequest, RequestEntityTooLarge
+import binascii
+import warnings
 
-# --- Configuration & Model Initialization ---
-# Remove global model initialization - it will be created per request
-# model: Optional[genai.GenerativeModel] = None
-generation_config: Optional[genai.types.GenerationConfig] = None
-
+# Keep the established server-only environment variable; never send it to the browser.
 load_dotenv()
-
-# Configure the Gemini API key from environment variable ONLY
-api_key = os.getenv("GOOGLE_API_KEY")
-if api_key:
-    try:
-        genai.configure(api_key=api_key)
-        # Set generation config here
-        # Hard-set temperature to 1.0
-        generation_config = genai.types.GenerationConfig(temperature=1.0)
-        print("Gemini API Key configured successfully.")
-    except Exception as e:
-        print(f"Error configuring Google AI SDK: {e}")
-        # Ensure config is None if setup fails
-        generation_config = None
-        api_key = None # Indicate API is not usable
-else:
-    print("Warning: GOOGLE_API_KEY environment variable not set. AI features will be disabled.")
-    # Ensure config is None if key is missing
-    generation_config = None
+api_key = os.getenv('GOOGLE_API_KEY')
 
 app = Flask(__name__)
+
+# Bound JSON transport, decoded image memory and model output independently.
+app.config['MAX_CONTENT_LENGTH'] = 8 * 1024 * 1024
+MAX_IMAGE_BYTES = 4 * 1024 * 1024
+MAX_IMAGE_PIXELS = 16_000_000
+MAX_SVG_CHARS = 2 * 1024 * 1024
+
+@app.errorhandler(RequestEntityTooLarge)
+def request_too_large(_error):
+    return jsonify({'error': 'Request or image exceeds the supported size limit.'}), 413
+
+@app.errorhandler(BadRequest)
+def invalid_request(_error):
+    return jsonify({'error': 'Invalid JSON request or image data.'}), 400
+
+def decode_image(value):
+    if not isinstance(value, str) or not re.match(r'^data:image/(png|jpeg|webp|gif);base64,', value):
+        raise BadRequest()
+    try:
+        encoded = value.split(',', 1)[1]
+        if len(encoded) > ((MAX_IMAGE_BYTES + 2) // 3) * 4:
+            raise RequestEntityTooLarge()
+        raw = base64.b64decode(encoded, validate=True)
+        if len(raw) > MAX_IMAGE_BYTES:
+            raise RequestEntityTooLarge()
+        with warnings.catch_warnings():
+            warnings.simplefilter('error', Image.DecompressionBombWarning)
+            image = Image.open(BytesIO(raw))
+            if image.width * image.height > MAX_IMAGE_PIXELS:
+                raise RequestEntityTooLarge()
+            image.load()
+        return image
+    except (Image.DecompressionBombWarning, Image.DecompressionBombError):
+        raise RequestEntityTooLarge()
+    except (ValueError, binascii.Error, UnidentifiedImageError, OSError):
+        raise BadRequest()
+
+@app.errorhandler(Denied)
+def denied_paid_request(error):
+    response=jsonify({'error':str(error)})
+    response.status_code=error.status
+    response.headers['Cache-Control']='no-store'
+    if error.status == 401:
+        response.headers['WWW-Authenticate']='Bearer'
+    return response
+
+@app.before_request
+def authorize_paid_request():
+    if request.path not in paid_access.PAID_ROUTES:
+        return
+    started=time.monotonic()
+    config=paid_access.settings()
+    if not api_key:
+        raise Denied(503,'Paid AI is disabled because the server provider is not configured. Local editing and exports remain available.')
+    principal,expires=paid_access.identity(config,request.headers)
+    expires=min(expires,config.policy['valid_until'])
+    g.paid_config=config
+    g.paid_principal=principal
+    g.paid_expires=expires
+    g.paid_deadline=min(started+config.policy['deadline_seconds'],time.monotonic()+expires-time.time())
+
+
+def paid_generate_content(key, model, contents):
+    return paid_access.execute(g.paid_config,g.paid_principal,g.paid_expires,g.paid_deadline,model,
+        lambda timeout,output: generate_content(key,model,contents,timeout_ms=timeout,max_output_tokens=output))
+
+@app.before_request
+def validate_payload():
+    if request.method != 'POST' or request.path not in {'/generate', '/analyze_image', '/convert_to_svg', '/refine_svg'}:
+        return
+    if not request.is_json:
+        raise BadRequest()
+    data = request.get_json()
+    if not isinstance(data, dict):
+        raise BadRequest()
+    limits = {'prompt': 32000, 'context_prompt': 32000, 'refinement_prompt': 32000,
+              'model': 200, 'svg_code': MAX_SVG_CHARS}
+    for key, limit in limits.items():
+        if key in data:
+            if not isinstance(data[key], str):
+                raise BadRequest()
+            if len(data[key]) > limit:
+                raise RequestEntityTooLarge()
+    for key in ('complexity', 'colorUsage'):
+        if key in data and (type(data[key]) is not int or not 1 <= data[key] <= 6):
+            raise BadRequest()
+    if 'analysis_data' in data:
+        analysis = data['analysis_data']
+        keys = {'metadata', 'semantic', 'layout', 'content_styling', 'ocr'}
+        if not isinstance(analysis, dict) or not keys.issubset(analysis):
+            raise BadRequest()
+        for key in keys:
+            if not isinstance(analysis[key], str):
+                raise BadRequest()
+            if len(analysis[key]) > 100000:
+                raise RequestEntityTooLarge()
+    if 'model' in data and data['model'] not in MODELS:
+        return jsonify({'error': 'Selected model is no longer supported. Choose a current model from the dropdown.'}), 400
+    g.images = {}
+    for key in ('image_data', 'png_data'):
+        if key in data:
+            g.images[key] = decode_image(data[key])
 
 # --- Helper Functions ---
 
 def _clean_svg_response(raw_text: str) -> Optional[str]:
     """Cleans the raw AI response to extract only the SVG code."""
-    if not raw_text:
+    if not isinstance(raw_text, str) or not raw_text or len(raw_text) > MAX_SVG_CHARS:
         return None
 
     svg_code = raw_text.strip()
@@ -65,7 +151,7 @@ def _clean_svg_response(raw_text: str) -> Optional[str]:
     if svg_code.startswith('<svg') and svg_code.endswith('</svg>'):
         return svg_code
     else:
-        print(f"Warning: Model output could not be cleaned into valid SVG:\n{raw_text}")
+        print('Model output did not contain a supported SVG document.')
         return None
 
 # --- Routes ---
@@ -73,13 +159,18 @@ def _clean_svg_response(raw_text: str) -> Optional[str]:
 @app.route('/')
 def index():
     """Serves the main HTML page."""
-    return render_template('index.html')
+    models=MODELS
+    try:
+        models={name:MODELS[name] for name in paid_access.settings().policy['models']}
+    except Denied:
+        pass  # Public editor must not depend on identity/database/provider setup.
+    default=DEFAULT_MODEL if DEFAULT_MODEL in models else next(iter(models))
+    return render_template('index.html', models=models, default_model=default)
 
 @app.route('/generate', methods=['POST'])
 def generate_svg():
     """Handles SVG generation requests using the selected model."""
-    # Use api_key (from env var) and check generation_config
-    if not api_key or not generation_config:
+    if not api_key:
         return jsonify({"error": "AI SDK not configured or API key missing."}), 503
 
     if not request.is_json:
@@ -89,7 +180,7 @@ def generate_svg():
     prompt = data.get('prompt')
     complexity = data.get('complexity', 5)
     colorUsage = data.get('colorUsage', 5)
-    selected_model_name = data.get('model', 'gemini-2.5-pro-exp-03-25') # Get selected model, default
+    selected_model_name = data.get('model', DEFAULT_MODEL) # Get selected model, default
 
     if not prompt:
         return jsonify({"error": "Missing 'prompt' in request"}), 400
@@ -101,18 +192,7 @@ def generate_svg():
         return jsonify({"error": str(e)}), 400 # Prompt format error
 
     try:
-        # Initialize the model dynamically based on selection
-        try:
-            dynamic_model = genai.GenerativeModel(selected_model_name)
-        except Exception as model_init_error:
-            print(f"Error initializing model '{selected_model_name}': {model_init_error}")
-            return jsonify({"error": f"Failed to initialize selected AI model: {selected_model_name}"}), 500
-
-        # Make the API call using the dynamic model and global config
-        response = dynamic_model.generate_content(
-            full_prompt,
-            generation_config=generation_config
-        )
+        response = paid_generate_content(api_key, selected_model_name, full_prompt)
 
         # Check response and clean it using the helper function (R1)
         if hasattr(response, 'text') and response.text:
@@ -131,8 +211,10 @@ def generate_svg():
             print(error_message)
             return jsonify({"error": error_message}), 500
 
+    except Denied:
+        raise
     except Exception as e: # Catch potential errors during generation
-        print(f"Error during AI generation: {e}")
+        print('Provider operation failed; no response details logged.')
         return jsonify({"error": "An internal error occurred during SVG generation."}), 500
 
 # --- New Extractor Endpoints (MVP Placeholders) ---
@@ -148,28 +230,20 @@ def analyze_image():
     data = request.get_json()
     image_data_url = data.get('image_data')
     context_prompt = data.get('context_prompt', '') # Renamed for clarity
-    model_name = data.get('model', 'gemini-2.0-flash')
+    model_name = data.get('model', DEFAULT_MODEL)
 
     if not image_data_url:
         return jsonify({"error": "No image data provided"}), 400
 
     try:
         # Decode image
-        header, encoded = image_data_url.split(",", 1)
-        image_data = base64.b64decode(encoded)
-        image = Image.open(BytesIO(image_data))
+        image = g.images['image_data']
 
         # --- Gemini API Call using prompt_utils ---
-        model = genai.GenerativeModel(model_name)
         prompt_parts = format_analysis_prompt(context_prompt, image) # Use the new function
 
-        response = model.generate_content(prompt_parts)
+        response = paid_generate_content(api_key, model_name, prompt_parts)
         analysis_text = response.text
-
-        # --- Log Raw API Response --- 
-        print("--- Raw Gemini API Response ---")
-        print(analysis_text)
-        print("-------------------------------")
 
         # --- Parse the response (Updated Section Names & Order) ---
         sections = {
@@ -202,25 +276,13 @@ def analyze_image():
                  sections["ocr"] = "No text detected."
         # Removed svg_summary check
 
-        # --- Log Parsed Sections --- 
-        print("--- Parsed Sections Dictionary ---")
-        print(sections)
-        print("---------------------------------")
-
         return jsonify(sections)
 
+    except Denied:
+        raise
     except Exception as e:
-        print(f"Error during image analysis: {e}") # Log the error
-        # Check for specific Gemini API errors if possible/needed
-        # Example: hasattr(e, 'message')
-        error_message = f"An error occurred during analysis: {str(e)}"
-        # Avoid sending overly technical details to the frontend if it's a server issue
-        if "API key" in str(e):
-             error_message = "API key validation failed. Please check server configuration."
-        elif isinstance(e, genai.types.generation_types.BlockedPromptException):
-             error_message = "Analysis request was blocked due to safety concerns."
-        elif isinstance(e, genai.types.generation_types.StopCandidateException):
-             error_message = "Analysis stopped unexpectedly. The image might be unsuitable or the request too complex."
+        print('Provider operation failed; no response details logged.')
+        error_message = 'Image analysis could not be completed. Try again or select another supported model.'
 
         return jsonify({"error": error_message}), 500
 
@@ -229,9 +291,6 @@ def convert_to_svg():
     """Handles SVG recreation requests using image + analysis data."""
     if not api_key: # Use the globally configured api_key
         return jsonify({"error": "API key not configured"}), 500
-    # Ensure generation_config is available (for temperature etc.)
-    if not generation_config:
-        return jsonify({"error": "Generation config not set."}), 503
 
     if not request.is_json:
         return jsonify({"error": "Request must be JSON"}), 400
@@ -240,7 +299,7 @@ def convert_to_svg():
     image_data_url = data.get('image_data') # Renamed for consistency
     analysis_data = data.get('analysis_data') # Expecting dict with the 5 analysis texts
     # Update default model here
-    selected_model_name = data.get('model', 'gemini-2.5-flash-preview-04-17') # New Default
+    selected_model_name = data.get('model', DEFAULT_MODEL) # New Default
     
     if not image_data_url or not analysis_data:
         return jsonify({"error": "Missing 'image_data' or 'analysis_data' in request"}), 400
@@ -254,9 +313,7 @@ def convert_to_svg():
 
     try:
         # 1. Decode Image
-        header, encoded = image_data_url.split(",", 1)
-        image_data = base64.b64decode(encoded)
-        image = Image.open(BytesIO(image_data))
+        image = g.images['image_data']
 
         # 2. Construct Prompt
         prompt_parts = [
@@ -290,17 +347,7 @@ def convert_to_svg():
             "7. Output ONLY the raw SVG code, starting strictly with `<svg` and ending strictly with `</svg>`. No markdown fences, no XML declaration, no comments, no other text.",
         ]
 
-        # 3. Initialize Model and Generate
-        try:
-            model = genai.GenerativeModel(selected_model_name)
-        except Exception as model_init_error:
-            print(f"Error initializing model '{selected_model_name}': {model_init_error}")
-            return jsonify({"error": f"Failed to initialize selected AI model: {selected_model_name}"}), 500
-
-        response = model.generate_content(
-            prompt_parts,
-            generation_config=generation_config # Use the global config
-        )
+        response = paid_generate_content(api_key, selected_model_name, prompt_parts)
 
         # 4. Process Response
         if hasattr(response, 'text') and response.text:
@@ -309,7 +356,7 @@ def convert_to_svg():
                 return jsonify({"svg_code": cleaned_svg})
             else:
                 # Cleaning failed
-                 print(f"Recreation cleaning failed. Raw response:\n{response.text}")
+                 print('Provider response did not contain a supported SVG document.')
                  return jsonify({"error": "Failed to extract valid SVG code from AI response."}), 500
         else:
             # Handle blocked or empty response
@@ -318,8 +365,10 @@ def convert_to_svg():
             # Consider adding more specific feedback if the API provides it
             return jsonify({"error": error_message}), 500
 
+    except Denied:
+        raise
     except Exception as e:
-        print(f"Error during SVG recreation: {e}")
+        print('Provider operation failed; no response details logged.')
         # Add more specific error checking if needed (like for API key errors during this call)
         return jsonify({"error": "An internal error occurred during SVG recreation."}), 500
 
@@ -328,8 +377,6 @@ def refine_svg():
     """Handles SVG refinement requests."""
     if not api_key:
         return jsonify({"error": "API key not configured"}), 500
-    if not generation_config:
-        return jsonify({"error": "Generation config not set."}), 503
     if not request.is_json:
         return jsonify({"error": "Request must be JSON"}), 400
 
@@ -338,7 +385,7 @@ def refine_svg():
     refinement_prompt = data.get('refinement_prompt', '') # Default to empty string
     png_data_url = data.get('png_data') # Get optional PNG data URL
     # Update default model here
-    selected_model_name = data.get('model', 'gemini-2.5-flash-preview-04-17') # New Default
+    selected_model_name = data.get('model', DEFAULT_MODEL) # New Default
 
     if not original_svg_code:
         return jsonify({"error": "Missing 'svg_code' in request"}), 400
@@ -364,16 +411,14 @@ def refine_svg():
         png_image = None
         if png_data_url:
             try:
-                header, encoded = png_data_url.split(",", 1)
-                png_data = base64.b64decode(encoded)
-                png_image = Image.open(BytesIO(png_data))
+                png_image = g.images['png_data']
                 prompt_parts.extend([
                     "\n\n**Rendered PNG of Original SVG:**",
                     png_image,
                     "(This image shows how the 'Original SVG Code' above currently renders.)"
                 ])
             except Exception as img_err:
-                print(f"Warning: Failed to decode/load PNG data: {img_err}")
+                print('Provider operation failed; no response details logged.')
                 prompt_parts.append("\n\n(Error loading rendered PNG preview)")
 
         # --- Include User Refinement Prompt --- 
@@ -393,17 +438,7 @@ def refine_svg():
             f"7. **Validity & Format:** Ensure the output is valid SVG code starting strictly with `<svg` and ending strictly with `</svg>`. No markdown, XML declaration, comments, or explanations."
         ])
 
-        # 2. Initialize Model and Generate
-        try:
-            model = genai.GenerativeModel(selected_model_name)
-        except Exception as model_init_error:
-            print(f"Error initializing model '{selected_model_name}': {model_init_error}")
-            return jsonify({"error": f"Failed to initialize selected AI model: {selected_model_name}"}), 500
-
-        response = model.generate_content(
-            prompt_parts, # Send the list of parts
-            generation_config=generation_config
-        )
+        response = paid_generate_content(api_key, selected_model_name, prompt_parts)
 
         # 3. Process Response
         if hasattr(response, 'text') and response.text:
@@ -411,18 +446,20 @@ def refine_svg():
             if cleaned_svg:
                 return jsonify({"svg_code": cleaned_svg})
             else:
-                print(f"Refinement cleaning failed. Raw response:\n{response.text}")
+                print('Provider response did not contain a supported SVG document.')
                 return jsonify({"error": "Failed to extract valid SVG code from refinement response."}), 500
         else:
             error_message = "AI generation failed during SVG refinement. Response was empty or blocked."
             print(error_message)
             return jsonify({"error": error_message}), 500
 
+    except Denied:
+        raise
     except Exception as e:
-        print(f"Error during SVG refinement: {e}")
+        print('Provider operation failed; no response details logged.')
         return jsonify({"error": "An internal error occurred during SVG refinement."}), 500
 
 # --- Run the App ---
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000) 
+    app.run(debug=False, host='0.0.0.0', port=5000)

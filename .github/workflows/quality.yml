@@ -1,0 +1,75 @@
+name: Locked application quality
+on:
+  pull_request:
+  push:
+    branches: [main, codex/sanitize-generated-svg]
+permissions:
+  contents: read
+concurrency:
+  group: quality-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  application:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres@sha256:3645570cccdfa447589da9f57dd740faa29b30938e861289a5574b6ca6b03826
+        env:
+          POSTGRES_USER: fixture
+          POSTGRES_PASSWORD: fixture
+          POSTGRES_DB: fixture
+        ports:
+          - 55432:5432
+        options: >-
+          --health-cmd "pg_isready -U fixture -d fixture"
+          --health-interval 2s --health-timeout 2s --health-retries 20
+    env:
+      TEST_DATABASE_URL: postgresql://fixture:fixture@127.0.0.1:55432/fixture
+      PAID_AI_ENABLED: '0'
+      GOOGLE_API_KEY: ''
+      GEMINI_API_KEY: ''
+      CHROMIUM_PATH: /usr/bin/chromium
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24.19.0'
+          cache: npm
+      - name: Hash-verified Python runtime and tooling
+        run: |
+          python -m venv .venv
+          .venv/bin/python -m pip install --require-hashes -r requirements-tooling.txt
+          .venv/bin/python -m pip install --require-hashes -r requirements.txt
+          .venv/bin/python -m pip check
+      - name: Locked browser build and strict types
+        run: |
+          npm ci
+          npm run typecheck
+          npm run build
+          git diff --exit-code -- static/script.js static/fonts
+      - name: Audit full Python and npm runtime and tooling inventories
+        run: |
+          .venv/bin/pip-audit
+          npm audit
+      - name: Identity, durable admission, Flask boundaries and offline SDK contracts
+        run: .venv/bin/python -m unittest discover -s tests -p 'test_*.py'
+      - name: Install locked Playwright Chromium
+        run: npx --no-install playwright install --with-deps chromium
+      - name: Mocked browser-to-Flask security, recreation and exports
+        env:
+          CHROMIUM_PATH: ''
+        run: .venv/bin/python tests/run_browser.py
+      - name: Cloud test evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: mocked-browser-evidence
+          path: work/
+          retention-days: 7
+          if-no-files-found: ignore

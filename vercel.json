@@ -4,7 +4,10 @@
     {
       "src": "app.py",
       "use": "@vercel/python",
-      "config": { "maxLambdaSize": "15mb", "runtime": "python3.12" }
+      "config": {
+        "maxLambdaSize": "15mb",
+        "runtime": "python3.12"
+      }
     }
   ],
   "routes": [
@@ -16,5 +19,8 @@
       "src": "/(.*)",
       "dest": "app.py"
     }
-  ]
-} 
+  ],
+  "env": {
+    "PAID_AI_ENABLED": "0"
+  }
+}
