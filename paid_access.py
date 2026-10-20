@@ -81,7 +81,7 @@ def settings():
             for name, maximum in {'output_tokens':8192,'requests_day':1000,'input_micro_per_token':1000,'output_micro_per_token':1000}.items():
                 if type(model.get(name)) is not int or not 1 <= model[name] <= maximum:
                     raise ValueError()
-        public = dict(issuer=issuer,audience=audience,subjects=subjects,keys=keys,header=header,policy=policy)
+        public = dict(enforcement_version=1,input_reserve=INPUT_RESERVE,output_reserve=OUTPUT_RESERVE,issuer=issuer,audience=audience,subjects=subjects,keys=keys,header=header,policy=policy)
         fingerprint=hashlib.sha256(json.dumps(public,sort_keys=True,separators=(',',':')).encode()).hexdigest()
         return Settings(issuer,audience,tuple(subjects),keys,header,dsn,policy,fingerprint)
     except (KeyError, ValueError, TypeError, jwt.PyJWTError, AttributeError, psycopg.Error):

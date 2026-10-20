@@ -51,9 +51,12 @@ class PaidSecurity(unittest.TestCase):
                 self.assertEqual(self.request(headers=headers,path=path).status_code,401)
         self.provider.assert_not_called()
     def test_signature_issuer_audience_expiry_allowlist_and_algorithm(self):
-        for changes in [{'iss':'https://attacker.invalid'},{'aud':'other'},{'exp':int(time.time())-1},{'iat':int(time.time())+20}]:
+        for changes in [{'iss':'https://attacker.invalid'},{'aud':'other'},{'exp':int(time.time())-1},{'iat':int(time.time())+20},{'nbf':int(time.time())+20},{'exp':int(time.time())+7200}]:
             self.assertEqual(self.request(self.access.token(**changes)).status_code,401)
         self.assertEqual(self.request(self.access.token(subject='unapproved')).status_code,403)
+        wrong_key=PaidFixture().key
+        wrong_signature=jwt.encode(dict(iss=self.access.config.issuer,aud=self.access.config.audience,sub='alice',iat=int(time.time()),exp=int(time.time())+300),wrong_key,algorithm='RS256',headers={'kid':'offline-fixture'})
+        self.assertEqual(self.request(wrong_signature).status_code,401)
         forged=jwt.encode({'sub':'alice'},'offline-attacker-fixture-only-32bytes-long',algorithm='HS256',headers={'kid':'offline-fixture'})
         self.assertEqual(self.request(forged).status_code,401)
         self.provider.assert_not_called()
@@ -71,6 +74,8 @@ class PaidSecurity(unittest.TestCase):
                 with test_connection() as conn:
                     used=conn.execute("SELECT requests FROM paid_ai_budget WHERE scope='global'").fetchone()
                     self.assertLessEqual(used[0] if used else 0,1)
+                if overrides == {'global_requests_day':1}:self.assertEqual(self.request(access.token('bob')).status_code,429)
+                if overrides == {'principal_requests_day':1}:self.assertEqual(self.request(access.token('bob')).status_code,200)
         with PaidFixture({'models':{'gemini-3.8-flash':dict(output_tokens=1024,requests_day=1,input_micro_per_token=1,output_micro_per_token=16)}}) as access:
             self.assertEqual(access.client().post('/generate',json={'prompt':'fixture'}).status_code,200)
             self.assertEqual(access.client().post('/generate',json={'prompt':'fixture'}).status_code,429)
