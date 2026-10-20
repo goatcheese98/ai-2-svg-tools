@@ -5,7 +5,7 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const {valid,bad} = require('./fixtures.json');
 (async () => {
- const browser = await chromium.launch({executablePath: process.env.CHROMIUM_PATH || '/usr/bin/chromium', args:['--no-sandbox']});
+ const browser = await chromium.launch({executablePath: process.env.CHROMIUM_PATH === '' ? undefined : (process.env.CHROMIUM_PATH || '/usr/bin/chromium'), args:['--no-sandbox']});
  try {
  const page = await browser.newPage();
  await page.addInitScript(()=>Object.defineProperty(navigator,'clipboard',{value:{writeText:async text=>{window.__copied=text;}}})); const external=[]; const errors=[];page.on('pageerror',e=>errors.push(e.message));

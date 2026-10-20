@@ -13,3 +13,5 @@ Browser regressions cover over-budget source, node/attribute count, nesting, geo
 These are conservative work budgets, not a universal CPU/GPU time proof. They prevent the documented simple size/DOM/reference amplification classes while bounding accepted documents. Renderer implementation bugs, platform-specific glyph/path tessellation behavior and the original editor text remaining editable are still limits. No hard wall-clock rendering guarantee is claimed.
 
 The browser harness now awaits a preview revision signal and generation success instead of 400/200 ms fixed sleeps. Provider requests remain mocked.
+
+The near-reference fixture includes each use node's own cost as well as the referenced group; the fixture was corrected from 98 to 97 uses to remain below the 10,000 expanded-element budget. The rejection observed for 98 uses was correct, not silent truncation.
