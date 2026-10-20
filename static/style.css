@@ -1,33 +1,29 @@
+@font-face { font-family: Geist; font-style: normal; font-weight: 100 900; font-display: swap; src: url('fonts/geist-latin-wght-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Geist Mono'; font-style: normal; font-weight: 100 900; font-display: swap; src: url('fonts/geist-mono-latin-wght-normal.woff2') format('woff2'); }
 :root {
-    /* Firebase-inspired Theme */
-    /* Primary Accent: Adjusted Orange */
-    --primary-color: #E69500; /* Darker/Less Sat Orange */
-    --primary-hover: #CC8400; /* Even Darker Orange */
-
-    --secondary-color: #8F8F8F; /* Gray 60 */
-    --secondary-hover: #ABABAB; /* Gray 70 */
-
-    /* Background: Dark Greys */
-    --background-start: #1F1F1F; /* Gray 10 */
-    --background-end: #000000;   /* Gray 0 (Black) */
-
-    /* Contrast & Structure */
-    --card-background: #303030;  /* Gray 20 */
-    --text-color: #FFFFFF;       /* Gray 100 */
-    --text-light: #E3E3E3;       /* Gray 90 */
-    --border-color: #474747;     /* Gray 30 */
-    --input-background: #474747; /* Gray 30 */
-    --input-focus-border: var(--primary-color);
-    --input-focus-shadow: rgba(230, 149, 0, 0.4); /* Adjusted Orange shadow */
-
-    --success-color: #34A853; /* Google Cloud Green */
-    --error-color: #DD2C00;   /* Firebase Red */
-
-    --font-family: 'Inter', sans-serif; /* Keep Inter for now */
-    --border-radius: 6px; /* Keep moderate radius */
-    --box-shadow: none; /* Remove default shadow for flatter look */
-    --button-shadow: none; /* Remove default shadow */
+    color-scheme: light;
+    --bg:#fff; --panel:#fff; --panel2:#fafafa; --line:#e4e4e7;
+    --fg:#18181b; --mut:#66666f; --acc:#18181b; --on-acc:#fff;
+    --success-color:#16845d; --on-success:#fff; --error-color:#b42318;
+    --r-xs:6px; --r-sm:8px; --r-md:10px; --r-lg:12px; --r-xl:16px;
+    --primary-color:var(--acc); --primary-hover:var(--fg);
+    --secondary-color:var(--mut); --secondary-hover:var(--fg);
+    --background-start:var(--bg); --background-end:var(--bg);
+    --card-background:var(--panel); --text-color:var(--fg); --text-light:var(--mut);
+    --border-color:var(--line); --input-background:var(--panel2);
+    --input-focus-border:var(--acc); --input-focus-shadow:color-mix(in srgb,var(--acc) 25%,transparent);
+    --font-family:Geist,system-ui,sans-serif;
+    --border-radius:var(--r-sm); --border-radius-small:var(--r-xs);
+    --box-shadow:none; --button-shadow:none;
 }
+@media (prefers-color-scheme:dark) {
+    :root { color-scheme:dark;
+        --bg:#0a0a0b; --panel:#121214; --panel2:#0e0e10; --line:#242428;
+        --fg:#ececee; --mut:#92929b; --acc:#d6a828; --on-acc:#141210;
+        --success-color:#72d4a5; --on-success:#052115; --error-color:#ff9b94;
+    }
+}
+
 
 body {
     font-family: var(--font-family);
@@ -48,28 +44,14 @@ body {
     padding: 35px 40px;
     
     background-color: var(--card-background);
-    /* Keep hachure fill */
-    background-image: 
-        repeating-linear-gradient(
-            -45deg,
-            rgba(255, 255, 255, 0.02), /* Subtle light lines */
-            rgba(255, 255, 255, 0.02) 1px,
-            transparent 1px,
-            transparent 6px /* Adjust line spacing */
-        );
+    background-image: none;
     border-radius: var(--border-radius); /* Keep existing radius */
     box-shadow: var(--box-shadow); 
     position: relative; 
     overflow: hidden; /* Important for border-radius + border-image */
     transition: none;
 
-    /* --- Add Gradient Border --- */
-    border-style: solid;
-    border-width: 2px; /* Adjust thickness as needed */
-    border-color: transparent; /* Make base border transparent */
-    border-image-slice: 1; /* Use the entire gradient image for the border */
-    border-image-source: linear-gradient(90deg, var(--primary-color), #C774E8); /* Adjusted Orange to Darker Pink/Purple */
-    /* --- End Gradient Border --- */
+    border: 2px solid var(--line);
 }
 
 .container:hover {
@@ -92,13 +74,7 @@ h1 {
     margin-bottom: 40px; 
     font-size: 2rem; 
 
-    /* Apply Text Gradient */
-    background: linear-gradient(90deg, var(--primary-color), #C774E8); /* Use the same gradient as border */
-    background-clip: text;
-    -webkit-background-clip: text; /* For wider browser support */
-    color: transparent; /* Make the text color transparent */
-    /* Optional: Adjust display if needed, but inline-block might affect centering */
-    /* display: inline-block; */ 
+
 }
 
 h2 {
@@ -142,7 +118,7 @@ h2 {
     border-radius: var(--border-radius);
     font-size: 1rem;
     resize: vertical;
-    background-color: #000000; /* SET TO BLACK */
+    background-color: var(--panel2); /* SET TO BLACK */
     color: var(--text-color);
     box-shadow: none;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
@@ -177,7 +153,7 @@ h2 {
     outline: none;
     border-color: var(--input-focus-border);
     box-shadow: 0 0 0 2px var(--input-focus-shadow);
-    background-color: #000000; /* KEEP BLACK ON FOCUS */
+    background-color: var(--panel2); /* KEEP BLACK ON FOCUS */
 }
 
 /* Style Options */
@@ -300,7 +276,7 @@ button:active {
 }
 #copy-btn:hover {
     color: var(--text-color);
-    background-color: rgba(255, 255, 255, 0.08); /* Slightly more visible hover */
+    background-color: var(--panel2); /* Slightly more visible hover */
 }
 #copy-btn.copied {
     background-color: var(--success-color);
@@ -310,7 +286,7 @@ button:active {
 
 button:disabled {
     background-color: var(--border-color);
-    color: #64748b;
+    color: var(--mut);
     cursor: not-allowed;
     box-shadow: none;
     border: 1px solid var(--border-color);
@@ -323,10 +299,10 @@ button:disabled {
     color: var(--text-light);
 }
 .status[style*="color: red"] {
-    color: #f87171; /* Lighter red for dark mode */
+    color: var(--error-color); /* Lighter red for dark mode */
 }
 .status[style*="color: green"] {
-    color: #34d399; /* Lighter green for dark mode */
+    color: var(--success-color); /* Lighter green for dark mode */
 }
 .status.info {
     color: var(--text-light); /* Use the standard light text color */
@@ -379,7 +355,7 @@ button:disabled {
 .preview-box.bg-transparent {
     background-color: transparent;
     /* Use a more subtle pattern */
-    background-image: linear-gradient(45deg, rgba(255, 255, 255, 0.05) 25%, transparent 25%), linear-gradient(-45deg, rgba(255, 255, 255, 0.05) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, rgba(255, 255, 255, 0.05) 75%), linear-gradient(-45deg, transparent 75%, rgba(255, 255, 255, 0.05) 75%);
+    background-image: linear-gradient(45deg, color-mix(in srgb,var(--mut) 12%,transparent) 25%, transparent 25%), linear-gradient(-45deg, color-mix(in srgb,var(--mut) 12%,transparent) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, color-mix(in srgb,var(--mut) 12%,transparent) 75%), linear-gradient(-45deg, transparent 75%, color-mix(in srgb,var(--mut) 12%,transparent) 75%);
     background-size: 30px 30px; /* Larger squares */
     background-position: 0 0, 0 15px, 15px -15px, -15px 0px; /* Adjust position for new size */
 }
@@ -390,7 +366,7 @@ button:disabled {
 }
 
 .preview-box.bg-black {
-    background-color: #1f2937; /* Use a dark color from the theme */
+    background-color: black; /* Use a dark color from the theme */
     background-image: none; /* Remove transparent pattern */
 }
 
@@ -521,7 +497,7 @@ h3 {
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
     margin-bottom: 20px;
-    background-color: #272934; /* Adjust slightly based on new palette */
+    background-color: var(--panel2); /* Adjust slightly based on new palette */
 }
 
 #history-list li {
@@ -542,7 +518,7 @@ h3 {
 /* Update History List Hover Color */
 #history-list li:hover {
     /* Use new primary color RGB */
-    background-color: rgba(230, 149, 0, 0.25); /* Adjusted Orange #E69500 at 25% opacity */
+    background-color: color-mix(in srgb,var(--acc) 15%,transparent); /* Adjusted Orange #E69500 at 25% opacity */
 }
 
 #history-list li .prompt-snippet {
@@ -895,17 +871,9 @@ h3 {
 .image-preview-container.dragover {
     border-color: var(--primary-color);
     border-style: solid; /* Change from dashed/solid to solid */
-    background-color: rgba(242, 153, 74, 0.1); /* Use accent color with low opacity */
+    background-color: var(--panel2); /* Use accent color with low opacity */
 }
 
-/* Output Container - Specific Linear Gradient */
-.output-container {
-    background: linear-gradient(180deg, /* Top to Bottom */
-        var(--card-background) 0%, /* Darker color at the top */
-        #243642 100% /* Lighter color at the bottom */
-    );
-    /* Styles specific to output container, if any */
-}
 
 /* New Drop Zone Styles */
 .drop-zone {
@@ -934,7 +902,7 @@ h3 {
 .drop-zone.dragover {
     border-color: var(--primary-color);
     border-style: solid;
-    background-color: rgba(242, 153, 74, 0.05); /* Lighter than upload-area hover */
+    background-color: var(--panel2); /* Lighter than upload-area hover */
 }
 
 .upload-area {
@@ -999,7 +967,7 @@ h3 {
 
 .analysis-block label {
     font-weight: bold;
-    color: #D1DD58; /* Keep label color */
+    color: var(--fg); /* Keep label color */
     font-size: 0.9rem;
 }
 
@@ -1009,7 +977,7 @@ h3 {
     resize: vertical; /* Allow vertical resizing only */
     overflow-y: hidden; /* Prevent scrollbar */
     padding: 0.8rem;
-    background-color: #000000; /* SET TO BLACK */
+    background-color: var(--panel2); /* SET TO BLACK */
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
     color: var(--text-color); 
@@ -1023,7 +991,7 @@ h3 {
     outline: none;
     border-color: var(--input-focus-border); /* Use variable */
     box-shadow: 0 0 0 2px var(--input-focus-shadow); /* Use variable */
-    background-color: #000000; /* KEEP BLACK ON FOCUS */
+    background-color: var(--panel2); /* KEEP BLACK ON FOCUS */
 }
 
 /* Ensure Convert button has some top margin when it appears */
@@ -1157,7 +1125,7 @@ h3 {
     box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.2); /* Subtle shadow on hover */
 }
 .primary-btn:disabled {
-    background-color: #a36800; /* Muted orange for disabled */
+    background-color: var(--line); /* Muted orange for disabled */
     color: var(--text-light); /* Light grey text */
     opacity: 0.7;
     cursor: not-allowed;
@@ -1180,7 +1148,7 @@ h3 {
 }
 .secondary-btn:disabled {
     background-color: var(--input-background);
-    color: #757575; /* Grey 50 */
+    color: var(--mut); /* Grey 50 */
     border-color: var(--border-color);
     opacity: 0.6;
     cursor: not-allowed;
@@ -1221,7 +1189,7 @@ h3 {
 }
 #copy-btn:hover {
     color: var(--text-color);
-    background-color: rgba(255, 255, 255, 0.08); /* Slightly more visible hover */
+    background-color: var(--panel2); /* Slightly more visible hover */
 }
 #copy-btn.copied {
     background-color: var(--success-color);
@@ -1236,7 +1204,7 @@ h3 {
 button:disabled {
     /* Generic disabled style, .primary-btn:disabled / .secondary-btn:disabled are more specific */
     background-color: var(--border-color);
-    color: #64748b;
+    color: var(--mut);
     cursor: not-allowed;
     box-shadow: none;
     border: 1px solid var(--border-color);
@@ -1337,7 +1305,7 @@ button:disabled {
     outline: none;
     border-color: var(--input-focus-border);
     box-shadow: 0 0 0 1px var(--input-focus-shadow);
-    background-color: #3a3c4c; 
+    background-color: var(--panel2);
 }
 
 .dimension-note {
@@ -1455,13 +1423,7 @@ button:disabled {
     cursor: pointer;
     min-width: 250px; /* Adjust as needed */
     transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
-    appearance: none;
-    -webkit-appearance: none;
-    /* Updated SVG arrow using text-light color */
-    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="%23E3E3E3" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/></svg>');
-    background-repeat: no-repeat;
-    background-position: right 12px center;
-    background-size: 12px 12px;
+    appearance: auto;
 }
 
 .model-selector select:hover {
@@ -1515,4 +1477,24 @@ button:disabled {
 #how-to-use-tab-content p,
 #how-to-use-tab-content li {
     font-size: 0.9rem; /* Further reduced from 0.95rem */
-} 
+}
+/* Existing layout, shared foundation: no new panels or information architecture. */
+button, input, textarea, select { font-family: var(--font-family); }
+#svg-code-editor, .png-dimensions input { font-family: 'Geist Mono', ui-monospace, monospace; }
+.primary-btn, .primary-btn:hover, .control-button.active, .tab-button.active { color: var(--on-acc); background-color: var(--acc); }
+.primary-btn:disabled { color: var(--mut); background-color: var(--line); }
+:focus-visible { outline: 2px solid var(--acc) !important; outline-offset: 3px; }
+button { min-height: 44px; }
+@media (max-width:600px) {
+    body { font-size:16px; }
+    input, textarea, select { font-size:1rem !important; }
+}
+@media (prefers-reduced-motion:reduce) {
+    *, *::before, *::after { animation:none !important; transition:none !important; scroll-behavior:auto !important; }
+}
+
+#save-btn.primary-btn, #save-png-btn.primary-btn, #save-custom-png-btn.primary-btn { background-color:var(--acc); color:var(--on-acc); }
+
+#generate-btn.primary-btn, #analyze-btn.primary-btn, #refine-btn.primary-btn, #recreate-svg-btn.primary-btn, .bg-control-btn.active { color:var(--on-acc); background-color:var(--acc); }
+
+#copy-btn.copied { color:var(--on-success); }

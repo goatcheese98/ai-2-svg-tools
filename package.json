@@ -1,11 +1,13 @@
 {
   "private": true,
   "scripts": {
-    "build": "esbuild browser/svg-safety.ts --bundle --format=iife --global-name=SvgSafety --outfile=static/svg-safety.js",
-    "typecheck": "tsc --noEmit --strict --lib DOM,ES2022 --moduleResolution bundler --module ESNext browser/svg-safety.ts",
+    "build": "esbuild browser/app.ts --bundle --format=iife --outfile=static/script.js && mkdir -p static/fonts && cp node_modules/@fontsource-variable/geist/files/geist-latin-wght-normal.woff2 static/fonts/ && cp node_modules/@fontsource-variable/geist-mono/files/geist-mono-latin-wght-normal.woff2 static/fonts/ && cp node_modules/@fontsource-variable/geist/LICENSE static/fonts/Geist-LICENSE.txt && cp node_modules/@fontsource-variable/geist-mono/LICENSE static/fonts/Geist-Mono-LICENSE.txt",
+    "typecheck": "tsc --noEmit --strict --lib DOM,DOM.Iterable,ES2022 --moduleResolution bundler --module ESNext browser/*.ts",
     "test": "node tests/svg-security.cjs"
   },
   "dependencies": {
+    "@fontsource-variable/geist": "5.3.0",
+    "@fontsource-variable/geist-mono": "5.3.0",
     "dompurify": "3.4.17"
   },
   "devDependencies": {

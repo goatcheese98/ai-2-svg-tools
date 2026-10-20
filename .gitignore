@@ -147,3 +147,6 @@ dmypy.json
 cython_debug/
 # Local browser build dependencies
 node_modules/
+
+# Task scratch logs and intermediate screenshots
+work/

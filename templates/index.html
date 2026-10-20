@@ -4,10 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI SVG Generator</title>
-    <!-- Google Font -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Licensed Geist fonts are served locally by style.css. -->
     <!-- Link to Stylesheet -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
@@ -79,7 +76,7 @@
                 <!-- Wrap upload elements in a drop zone container -->
                 <div id="drop-zone" class="drop-zone">
                     <p class="drop-zone-prompt">Drag & Drop Image Here</p>
-                    <p class="upload-limit-note">(Max file size: ~16MB, server configured)</p>
+                    <p class="upload-limit-note">(PNG, JPEG, WebP or GIF; max decoded file 4 MiB, 16 million pixels)</p>
                     <div class="upload-area">
                         <!-- Keep existing label, hidden input, button, span -->
                         <label for="image-upload">Or Upload Image:</label>
@@ -263,7 +260,6 @@
         </div>
     </div>
 
-    <script src="{{ url_for('static', filename='svg-safety.js') }}"></script>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html> 

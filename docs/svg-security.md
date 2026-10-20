@@ -37,14 +37,14 @@ git diff --check
 
 All passed after the fix. Audit reported zero production dependency vulnerabilities. Browser tests intercept every HTTP request: local template/assets and mocked generation/refinement/analysis responses only; external requests are aborted. The template's existing Google Fonts request is blocked separately. Fixtures cover script, foreignObject, handlers, javascript/entity-encoded URLs, external/protocol-relative/data/xlink resources, CSS loads and animation; legacy history; mocked generation/refinement; uploaded SVG isolation and mocked analysis; malformed SVG; valid geometry/gradient/text; immediate SVG download; default/custom PNG signatures, dimensions and gradient pixels. No live provider calls, credentials, production endpoints, public preview or deployment.
 
-The generated static/svg-safety.js is committed so existing Flask/Vercel serving needs no new runtime build service. Rebuild after source/dependency changes and review the generated diff. DOMPurify's license is retained in the bundle.
+The generated static/script.js is committed so existing Flask/Vercel serving needs no new runtime build service. The follow-up TypeScript migration combines the app and sanitizer into this single bundle; the obsolete standalone svg-safety.js has been deleted. Rebuild after source/dependency changes and review the generated diff. DOMPurify's license is retained in the bundle.
 
 ## Limits and next slices
 
 - This is a static SVG subset. CSS, animation, embedded images, external fonts/resources and SVG filters are intentionally removed; some formerly accepted artwork will lose those features. No visual redesign.
-- Sanitization does not bound geometric complexity, editor size or raster export allocation. Add explicit size/complexity/dimension limits in a follow-up if needed.
-- Next explicit modernization slice: migrate remaining first-party static/script.js into small TypeScript modules (workflow UI, history, uploads, PNG conversion), preserving current behavior with mocked browser coverage. No framework rewrite in this change.
-- Existing recreation handler references undefined recreateButton/recreateStatusDisplay/getAnalysisDataFromTextareas. It already fails before reaching its request; restore that handler with a mocked end-to-end regression as a separate follow-up. Its successful-response preview path is protected, but recreation is not claimed functional here.
+- Geometric complexity is not bounded. The follow-up adds server request/image/model-output limits and browser raster limits; see modernization-followup.md. Browser editor input itself remains uncapped.
+- Completed in the follow-up: migrate all first-party browser feature source to strict TypeScript (browser/app.ts and svg-safety.ts), including workflow UI, history, uploads and PNG conversion. static/script.js is now generated only. Further module extraction can follow without a framework rewrite.
+- Resolved in the follow-up: missing recreation variables/helper now use the existing UI controls and validated analysis textareas. A failing offline regression preceded the fix; the browser-to-Flask recreation journey now passes under a local provider mock. Refinement now sends Flask's expected svg_code field.
 - Deprecated google.generativeai SDK/model compatibility is outside this slice; no live provider compatibility verified. Existing refinement payload naming is unchanged.
 - Defense in depth such as CSP and server-side sanitization for any future server rendering/sharing remains separate work. The current application renders/exports through the browser boundary.
 

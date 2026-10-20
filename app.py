@@ -1,6 +1,6 @@
 import os
 import google.generativeai as genai
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, g
 # from config import google_api_key # Import the API key - REMOVED
 import re
 from prompt_utils import format_svg_prompt, format_analysis_prompt # Import the prompt formatting utility and new function
@@ -8,7 +8,10 @@ from typing import Optional, Dict, Any # Import Dict, Any
 from dotenv import load_dotenv
 import base64
 from io import BytesIO
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
+from werkzeug.exceptions import BadRequest, RequestEntityTooLarge
+import binascii
+import warnings
 
 # --- Configuration & Model Initialization ---
 # Remove global model initialization - it will be created per request
@@ -38,11 +41,82 @@ else:
 
 app = Flask(__name__)
 
+# Bound JSON transport, decoded image memory and model output independently.
+app.config['MAX_CONTENT_LENGTH'] = 8 * 1024 * 1024
+MAX_IMAGE_BYTES = 4 * 1024 * 1024
+MAX_IMAGE_PIXELS = 16_000_000
+MAX_SVG_CHARS = 2 * 1024 * 1024
+
+@app.errorhandler(RequestEntityTooLarge)
+def request_too_large(_error):
+    return jsonify({'error': 'Request or image exceeds the supported size limit.'}), 413
+
+@app.errorhandler(BadRequest)
+def invalid_request(_error):
+    return jsonify({'error': 'Invalid JSON request or image data.'}), 400
+
+def decode_image(value):
+    if not isinstance(value, str) or not re.match(r'^data:image/(png|jpeg|webp|gif);base64,', value):
+        raise BadRequest()
+    try:
+        encoded = value.split(',', 1)[1]
+        if len(encoded) > ((MAX_IMAGE_BYTES + 2) // 3) * 4:
+            raise RequestEntityTooLarge()
+        raw = base64.b64decode(encoded, validate=True)
+        if len(raw) > MAX_IMAGE_BYTES:
+            raise RequestEntityTooLarge()
+        with warnings.catch_warnings():
+            warnings.simplefilter('error', Image.DecompressionBombWarning)
+            image = Image.open(BytesIO(raw))
+            if image.width * image.height > MAX_IMAGE_PIXELS:
+                raise RequestEntityTooLarge()
+            image.load()
+        return image
+    except (Image.DecompressionBombWarning, Image.DecompressionBombError):
+        raise RequestEntityTooLarge()
+    except (ValueError, binascii.Error, UnidentifiedImageError, OSError):
+        raise BadRequest()
+
+@app.before_request
+def validate_payload():
+    if request.method != 'POST' or request.path not in {'/generate', '/analyze_image', '/convert_to_svg', '/refine_svg'}:
+        return
+    if not request.is_json:
+        raise BadRequest()
+    data = request.get_json()
+    if not isinstance(data, dict):
+        raise BadRequest()
+    limits = {'prompt': 32000, 'context_prompt': 32000, 'refinement_prompt': 32000,
+              'model': 200, 'svg_code': MAX_SVG_CHARS}
+    for key, limit in limits.items():
+        if key in data:
+            if not isinstance(data[key], str):
+                raise BadRequest()
+            if len(data[key]) > limit:
+                raise RequestEntityTooLarge()
+    for key in ('complexity', 'colorUsage'):
+        if key in data and (type(data[key]) is not int or not 1 <= data[key] <= 6):
+            raise BadRequest()
+    if 'analysis_data' in data:
+        analysis = data['analysis_data']
+        keys = {'metadata', 'semantic', 'layout', 'content_styling', 'ocr'}
+        if not isinstance(analysis, dict) or not keys.issubset(analysis):
+            raise BadRequest()
+        for key in keys:
+            if not isinstance(analysis[key], str):
+                raise BadRequest()
+            if len(analysis[key]) > 100000:
+                raise RequestEntityTooLarge()
+    g.images = {}
+    for key in ('image_data', 'png_data'):
+        if key in data:
+            g.images[key] = decode_image(data[key])
+
 # --- Helper Functions ---
 
 def _clean_svg_response(raw_text: str) -> Optional[str]:
     """Cleans the raw AI response to extract only the SVG code."""
-    if not raw_text:
+    if not isinstance(raw_text, str) or not raw_text or len(raw_text) > MAX_SVG_CHARS:
         return None
 
     svg_code = raw_text.strip()
@@ -155,9 +229,7 @@ def analyze_image():
 
     try:
         # Decode image
-        header, encoded = image_data_url.split(",", 1)
-        image_data = base64.b64decode(encoded)
-        image = Image.open(BytesIO(image_data))
+        image = g.images['image_data']
 
         # --- Gemini API Call using prompt_utils ---
         model = genai.GenerativeModel(model_name)
@@ -254,9 +326,7 @@ def convert_to_svg():
 
     try:
         # 1. Decode Image
-        header, encoded = image_data_url.split(",", 1)
-        image_data = base64.b64decode(encoded)
-        image = Image.open(BytesIO(image_data))
+        image = g.images['image_data']
 
         # 2. Construct Prompt
         prompt_parts = [
@@ -364,9 +434,7 @@ def refine_svg():
         png_image = None
         if png_data_url:
             try:
-                header, encoded = png_data_url.split(",", 1)
-                png_data = base64.b64decode(encoded)
-                png_image = Image.open(BytesIO(png_data))
+                png_image = g.images['png_data']
                 prompt_parts.extend([
                     "\n\n**Rendered PNG of Original SVG:**",
                     png_image,
