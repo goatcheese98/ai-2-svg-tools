@@ -13,11 +13,10 @@ class RequestLimits(unittest.TestCase):
     def setUp(self):
         self.client = app.app.test_client()
         self.key = patch.object(app, 'api_key', 'offline-fixture')
-        self.config = patch.object(app, 'generation_config', object())
-        self.model = patch.object(app.genai, 'GenerativeModel')
-        self.key.start(); self.config.start(); self.provider = self.model.start()
+        self.model = patch.object(app, 'generate_content')
+        self.key.start(); self.provider = self.model.start()
         self.addCleanup(patch.stopall)
-        self.provider.return_value.generate_content.return_value = SimpleNamespace(text='<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script><rect width="10" height="10"/></svg>')
+        self.provider.return_value = SimpleNamespace(text='<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script><rect width="10" height="10"/></svg>')
 
     def test_request_cap(self):
         self.assertEqual(self.client.post('/generate', data=b'x'*(8*1024*1024+1), content_type='application/json').status_code, 413)

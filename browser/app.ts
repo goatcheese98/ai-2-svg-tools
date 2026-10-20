@@ -473,7 +473,8 @@ document.addEventListener('DOMContentLoaded', () => {
             // colorSlider.value = item.colorUsage;
             // complexityValueSpan.textContent = item.complexity;
             // colorValueSpan.textContent = item.colorUsage;
-            if (item.model && Array.from(modelSelect.options).some(option => option.value === item.model)) modelSelect.value = item.model; // Update model dropdown
+            if (item.model && Array.from(modelSelect.options).some(option => option.value === item.model)) modelSelect.value = item.model;
+            else if (item.model) _update_generation_ui(false, 'The saved model is no longer offered. Review the current model selection before generating.', true); // Update model dropdown
 
             // Update SVG output
             svgCodeEditor.value = item.svgCode;

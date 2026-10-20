@@ -50,3 +50,6 @@ DOMPurify remains pinned at 3.4.17, esbuild 0.28.2, TypeScript 7.0.2 and Playwri
 Remaining SVG compatibility limits: CSS, external/embedded images, filters, animation and external references are deliberately stripped. Complex path counts, huge browser editor inputs and preview rendering time are not capped; geometric-complexity limits and CSP remain follow-ups. TypeScript source can be split by workflow after this complete feature-path migration. Further UI layout work requires the project-specific versioned Paper design record; none exists yet.
 
 Authoritative model ID/reasoning-effort metadata is unavailable in this session.
+
+
+Superseded by the next hardening slice: Python runtime/tooling are now hash-locked and fully audited (docs/dependencies.md), SVG DOM/reference/geometry budgets are enforced (docs/svg-complexity.md), hosted quality CI is defined (docs/quality-ci.md), and the deprecated provider SDK/model catalog has been migrated under offline contracts (docs/provider-migration.md). Earlier results above describe the TypeScript checkpoint, not the final branch.

@@ -42,10 +42,10 @@ The generated static/script.js is committed so existing Flask/Vercel serving nee
 ## Limits and next slices
 
 - This is a static SVG subset. CSS, animation, embedded images, external fonts/resources and SVG filters are intentionally removed; some formerly accepted artwork will lose those features. No visual redesign.
-- Geometric complexity is not bounded. The follow-up adds server request/image/model-output limits and browser raster limits; see modernization-followup.md. Browser editor input itself remains uncapped.
+- Geometric complexity is now conservatively budgeted by the subsequent slice in svg-complexity.md. The follow-up adds server request/image/model-output limits and browser raster limits; see modernization-followup.md. Browser editor input itself remains uncapped.
 - Completed in the follow-up: migrate all first-party browser feature source to strict TypeScript (browser/app.ts and svg-safety.ts), including workflow UI, history, uploads and PNG conversion. static/script.js is now generated only. Further module extraction can follow without a framework rewrite.
 - Resolved in the follow-up: missing recreation variables/helper now use the existing UI controls and validated analysis textareas. A failing offline regression preceded the fix; the browser-to-Flask recreation journey now passes under a local provider mock. Refinement now sends Flask's expected svg_code field.
-- Deprecated google.generativeai SDK/model compatibility is outside this slice; no live provider compatibility verified. Existing refinement payload naming is unchanged.
+- The subsequent provider-migration.md slice replaces the deprecated SDK under offline contracts; live provider compatibility remains unverified. Existing refinement payload naming is unchanged.
 - Defense in depth such as CSP and server-side sanitization for any future server rendering/sharing remains separate work. The current application renders/exports through the browser boundary.
 
 Separate production configuration commit: direct `python app.py` startup now explicitly uses debug=False, preserving its host/port. Verified by runpy with Flask.run mocked and asserting debug is False (no server or provider call). WSGI configuration remains unchanged.

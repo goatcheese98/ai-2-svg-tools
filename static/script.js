@@ -2621,6 +2621,7 @@
         setActiveButton(complexityButtons, item.complexity);
         setActiveButton(colorUsageButtons, item.colorUsage);
         if (item.model && Array.from(modelSelect.options).some((option) => option.value === item.model)) modelSelect.value = item.model;
+        else if (item.model) _update_generation_ui(false, "The saved model is no longer offered. Review the current model selection before generating.", true);
         svgCodeEditor.value = item.svgCode;
         updatePreview(item.svgCode);
         switchTab("generator-tab-content");

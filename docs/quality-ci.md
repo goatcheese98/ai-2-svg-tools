@@ -15,3 +15,5 @@ npm run build
 ```
 
 The cloud initially uses /usr/bin/chromium. Hosted CI explicitly installs the Playwright-pinned browser and passes CHROMIUM_PATH='' to select it. The same pinned browser can be used in cloud with `npx --no-install playwright install chromium` followed by `CHROMIUM_PATH='' .venv/bin/python tests/run_browser.py`. No paid API call or production server is involved. A workflow definition alone is not a passing hosted run; the PR report must link the actual run and state its result after publication.
+
+The provider follow-up adds three installed-SDK offline HTTP serialization/lifecycle/error contracts alongside the six Flask boundary tests (nine unittest cases total); the workflow includes both.

@@ -1,0 +1,15 @@
+# Google GenAI migration (mocked contracts only)
+
+Official sources read during this slice:
+
+- [Google's migration guide](https://ai.google.dev/gemini-api/docs/migrate): central google.genai.Client, models.generate_content, GenerateContentConfig, response.text, and PIL image contents replace the legacy google-generativeai interface.
+- [Python SDK documentation](https://googleapis.github.io/python-genai/): request-scoped client context management, HTTP options and proxy/environment behavior.
+- [Current model catalog](https://ai.google.dev/gemini-api/docs/models): the documented stable IDs offered here are gemini-3.8-flash (default), gemini-4-argon (reasoning), gemini-3.6-flash and gemini-3.5-flash-lite.
+
+provider.py is the only SDK adapter. google-genai 2.31.0 replaces google-generativeai in the hash-locked runtime; a fresh install has no legacy SDK. It creates and closes a client per action, passes the established server-only GOOGLE_API_KEY explicitly, preserves temperature 1.0 and PIL image contents, and sets a 60-second HTTP timeout, one attempt and 32,768 output-token cap. Prompt construction, request field names, generation/refinement/analysis/recreation behavior, history and the checked SVG boundary are retained. No credential is embedded in browser assets or HTML, and no credential was provisioned for validation.
+
+The three existing model dropdowns keep their positions and use one server catalog. Historical experimental IDs are no longer offered or silently redirected: an API request for an unsupported ID returns actionable 400 before constructing a client, and old history remains readable with a visible instruction to review the current selection. Updated tooltips distinguish reasoning models and remind users that availability/cost depend on their own account. This is a deliberate model-choice compatibility change; it does not claim equivalent outputs or prices to the retired previews.
+
+Nine unittest cases pass: six existing Flask request/image boundaries plus three SDK contracts using httpx.MockTransport (no external network). The installed SDK serializes text/config and PIL inline images; tests verify endpoint/model, server-only dummy key, temperature/output cap/timeout, client close, empty response, provider error without key reflection, unsupported models before client construction, and malicious SVG output remaining untrusted until the browser boundary. The complete mocked browser-to-Flask journey also passes with malicious provider fixtures. Raw model text and SDK exception details are no longer printed by application error paths.
+
+No live model/account availability, billing/quota, latency or output-quality compatibility has been checked. Those require separately authorized live checks with an existing server credential; this task forbids both paid provider calls and provisioning credentials. The documented models/API version may evolve, so future owners must consult the official catalog before release. No auth/account setting or production deployment changed. No claim of human design approval or Paper artboard is made.

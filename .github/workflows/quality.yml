@@ -43,7 +43,7 @@ jobs:
         run: |
           .venv/bin/pip-audit
           npm audit
-      - name: Six Flask request and image boundary tests
+      - name: Six Flask boundary tests and offline SDK contracts
         run: .venv/bin/python -m unittest discover -s tests -p 'test_*.py'
       - name: Install locked Playwright Chromium
         run: npx --no-install playwright install --with-deps chromium

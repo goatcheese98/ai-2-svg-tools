@@ -15,7 +15,7 @@ const {valid,bad} = require('./fixtures.json');
   const u = new URL(route.request().url());
   if(u.origin !== origin) {if(u.hostname !== 'fonts.googleapis.com') external.push(u.href);return route.abort();}
   if(process.env.APP_URL) return route.continue();
-  if(u.pathname === '/') return route.fulfill({contentType:'text/html',body:fs.readFileSync(path.join(root,'templates/index.html'),'utf8').replace(/\{\{ url_for\('static', filename='([^']+)'\) \}\}/g,'/static/$1')});
+  if(u.pathname === '/') return route.fulfill({contentType:'text/html',body:fs.readFileSync(path.join(root,'templates/index.html'),'utf8').replace(/\{% for model_id, label in models.items\(\) %\}[\s\S]*?\{% endfor %\}/g,'<option value="gemini-3.8-flash">Gemini 3.8 Flash</option>') .replace(/\{\{ url_for\('static', filename='([^']+)'\) \}\}/g,'/static/$1')});
   if(u.pathname.startsWith('/static/')) return route.fulfill({path:path.join(root,u.pathname)});
   if(u.pathname === '/analyze_image') return route.fulfill({json:{metadata:'Offline fixture',semantic:'A rectangle',layout:'Centered',content_styling:'Gradient',ocr:'Hello'}});
   if(u.pathname === '/refine_svg') assert.equal(typeof route.request().postDataJSON().svg_code,'string');
