@@ -1498,3 +1498,6 @@ button { min-height: 44px; }
 #generate-btn.primary-btn, #analyze-btn.primary-btn, #refine-btn.primary-btn, #recreate-svg-btn.primary-btn, .bg-control-btn.active { color:var(--on-acc); background-color:var(--acc); }
 
 #copy-btn.copied { color:var(--on-success); }
+
+/* Native history controls retain the existing row layout. */
+.history-entry { display:flex; align-items:center; justify-content:space-between; gap:12px; width:100%; margin:0; padding:0; text-align:left; border:0; border-radius:var(--r-xs); background:transparent; color:inherit; font:inherit; cursor:pointer; }

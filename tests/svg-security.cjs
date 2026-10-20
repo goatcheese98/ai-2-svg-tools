@@ -87,12 +87,14 @@ const {valid,bad} = require('./fixtures.json');
  assert.equal(await page.evaluate(()=>window.pwned),undefined);
  // Saved history is untrusted, including legacy records.
  await page.evaluate(svgCode=>sessionStorage.setItem('svgGeneratorHistory',JSON.stringify([{prompt:'history',svgCode,complexity:3,colorUsage:3,model:'offline',timestamp:new Date().toISOString()}])),bad);
- await page.reload(); await page.locator('#history-list li').first().click();await safe();
+ await page.reload(); await page.locator('#refine-btn').focus();await page.keyboard.press('Tab');assert(await page.locator('#history-list button').first().evaluate(el=>el===document.activeElement),'history is in the native Tab order');await page.keyboard.press('Enter');await safe();
+ await edit(valid);await page.locator('#history-list button').first().focus();await page.keyboard.press('Space');await safe();
  await page.locator('#prompt').fill('offline');
  if(process.env.APP_URL) {
+  const localSource=await page.locator('#svg-code-editor').inputValue();
   await page.locator('#generate-btn').click();
   await page.waitForFunction(()=>document.querySelector('#status-message').textContent.includes('Sign in'));
-  await safe();
+  await safe();assert.equal(await page.locator('#svg-code-editor').inputValue(),localSource,'authorization failure preserves local work');
   const forged=await page.evaluate(async()=>{const r=await fetch('/generate',{method:'POST',headers:{'Content-Type':'application/json','X-User':'alice',Origin:location.origin,Authorization:'Bearer forged'},body:JSON.stringify({prompt:'fixture'})});return r.status;});
   assert.equal(forged,401,'caller-chosen headers are not identity');
   const identity=JSON.parse(fs.readFileSync(path.join(root,'work/browser-identity.json'),'utf8'));
@@ -145,6 +147,6 @@ const {valid,bad} = require('./fixtures.json');
  assert.deepEqual(external,[],'no untrusted external loads across all workflows');
  await page.evaluate(()=>sessionStorage.setItem('svgGeneratorHistory','{bad JSON'));await page.reload();assert.equal(await page.locator('#history-list li').count(),0);
  assert.deepEqual(errors,[],'no browser runtime errors');
- console.log('PASS: malicious editor/history/mocked generation/refinement, image analysis/upload isolation and recreation, URL variants, immediate sanitized SVG download, valid geometry/gradient/text, default/custom PNG dimensions and pixels, invalid SVG, raster cap, fonts/focus/themes, paid unauthorized/authorized admission');
+ console.log('PASS: malicious editor/history/mocked generation/refinement, image analysis/upload isolation and recreation, URL variants, immediate sanitized SVG download, valid geometry/gradient/text, default/custom PNG dimensions and pixels, invalid SVG, raster cap, fonts/focus/themes, paid unauthorized/authorized admission, native keyboard history');
  } finally {await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1});

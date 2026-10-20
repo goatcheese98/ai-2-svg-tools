@@ -2480,8 +2480,6 @@
       const colorUsage = getSelectedButtonValue(colorUsageButtons);
       const selectedModel = modelSelect.value;
       _update_generation_ui(true, "Generating SVG...");
-      svgCodeEditor.value = "";
-      updatePreview("");
       try {
         const response = await fetch("/generate", {
           method: "POST",
@@ -2596,21 +2594,25 @@
       historyList2.innerHTML = "";
       currentHistory.forEach((item, index) => {
         const li = document.createElement("li");
+        const historyButton = document.createElement("button");
+        historyButton.type = "button";
+        historyButton.className = "history-entry";
         const versionString = item.version ? ` (v${item.version})` : "";
         const parametersString = `(Cmplx:${item.complexity}, Clr:${item.colorUsage}, M:${item.model || "Default"})`;
         const timestampString = new Date(item.timestamp).toLocaleString();
         const promptSpan = document.createElement("span");
         promptSpan.className = "prompt-snippet";
         promptSpan.textContent = `${item.prompt}${versionString} ${parametersString}`;
-        li.appendChild(promptSpan);
+        historyButton.appendChild(promptSpan);
         const timestampSpan = document.createElement("span");
         timestampSpan.className = "timestamp";
         timestampSpan.textContent = timestampString;
-        li.appendChild(timestampSpan);
+        historyButton.appendChild(timestampSpan);
         li.dataset.index = String(index);
-        li.addEventListener("click", () => {
+        historyButton.addEventListener("click", () => {
           loadHistoryItem(index);
         });
+        li.appendChild(historyButton);
         historyList2.appendChild(li);
       });
     }

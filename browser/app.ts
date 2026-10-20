@@ -280,8 +280,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const selectedModel = modelSelect.value;
 
         _update_generation_ui(true, 'Generating SVG...');
-        svgCodeEditor.value = '';
-        updatePreview('');
+        // Keep local work intact if paid admission/authentication rejects this action.
 
         try {
             const response = await fetch('/generate', {
@@ -432,6 +431,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         currentHistory.forEach((item, index) => {
             const li = document.createElement('li');
+            const historyButton = document.createElement('button');
+            historyButton.type = 'button';
+            historyButton.className = 'history-entry';
 
             // --- UPDATE: Display 1-6 values in history ---
             const versionString = item.version ? ` (v${item.version})` : ''; // Add version if it exists
@@ -441,18 +443,19 @@ document.addEventListener('DOMContentLoaded', () => {
             const promptSpan = document.createElement('span');
             promptSpan.className = 'prompt-snippet';
             promptSpan.textContent = `${item.prompt}${versionString} ${parametersString}`;
-            li.appendChild(promptSpan);
+            historyButton.appendChild(promptSpan);
 
             const timestampSpan = document.createElement('span');
             timestampSpan.className = 'timestamp';
             timestampSpan.textContent = timestampString;
-            li.appendChild(timestampSpan);
+            historyButton.appendChild(timestampSpan);
 
 
             li.dataset.index = String(index); // Store index for retrieval
-            li.addEventListener('click', () => {
+            historyButton.addEventListener('click', () => {
                 loadHistoryItem(index);
             });
+            li.appendChild(historyButton);
             historyList.appendChild(li);
         });
     }
